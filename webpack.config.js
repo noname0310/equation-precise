@@ -11,13 +11,32 @@ module.exports = {
         assetModuleFilename: "images/[name][ext]",
     },
     module: {
-        rules: [{
+        rules: [
+            {
                 test: /\.tsx?$/,
                 loader: "ts-loader"
             },
             {
                 test: /\.(png|jpg|gif)$/,
                 type: "asset",
+            },
+            {
+                test: /\.(png|jpg|gif)$/,
+                loader: "file-loader",
+                options: {
+                    name: "asset/image/[name].[ext]?[hash]"
+                }
+            },
+            {
+                test: /\.(mp3|ogg|wav)$/,
+                loader: "file-loader",
+                options: {
+                    name: "asset/audio/[name].[ext]?[hash]"
+                }
+            },
+            {
+                test: /\.html$/i,
+                loader: "html-loader",
             }
         ],
     },
