@@ -42,11 +42,6 @@ html, body {
     background-color: #e0e0e0;
 }
 
-.animation_slider {
-    width: 100%;
-    margin: 0px 10px 0px 10px;
-}
-
 .control_text {
     margin: 0px 10px 0px 10px;
     width: 80px;
