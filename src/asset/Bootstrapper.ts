@@ -1,10 +1,9 @@
-import { Vector2, Vector3 } from "three/src/Three";
+import { Vector2 } from "three/src/Three";
 import { 
     Bootstrapper as BaseBootstrapper,
     Camera,
     Color,
     Css2DEdgeRenderer,
-    CssHtmlElementRenderer,
     PrefabRef,
     SceneBuilder
 } from "the-world-engine";
@@ -21,24 +20,6 @@ export class Bootstrapper extends BaseBootstrapper {
         return this.sceneBuilder
             .withChild(instantiater.buildGameObject("graph-renderer")
                 .withComponent(GraphRenderer))
-
-            .withChild(instantiater.buildGameObject("test-object", new Vector3(1, 0, 0))
-                .withComponent(CssHtmlElementRenderer, c => {
-                    const div = document.createElement("div");
-                    div.style.border = "1px solid black";
-                    c.element = div;
-                    c.elementWidth = 1;
-                    c.elementHeight = 1;
-                }))
-            
-            .withChild(instantiater.buildGameObject("test-object", new Vector3(0, 0, 0))
-                .withComponent(CssHtmlElementRenderer, c => {
-                    const div = document.createElement("div");
-                    div.style.border = "1px solid black";
-                    c.element = div;
-                    c.elementWidth = 1;
-                    c.elementHeight = 1;
-                }))
 
             .withChild(instantiater.buildGameObject("camera")
                 .withComponent(Camera, c => {
