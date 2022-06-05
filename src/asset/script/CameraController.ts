@@ -21,8 +21,8 @@ export class CameraController extends Component {
     private _mouseMoveButtonDown = false;
     private _mouseMoveButton = 1;
     private readonly _lastOffset: Vector2 = new Vector2();
-    private _minViewSize = 1;
-    private _maxViewSize = 10;
+    private _minViewSize = 0.01;
+    private _maxViewSize = 100000;
     private _defaultViewSize = 5;
     private _currentViewSize = 5;
     private readonly _defaultPosition = new Vector3();
@@ -74,7 +74,7 @@ export class CameraController extends Component {
     };
 
     private readonly onWheel = (event: WheelEvent): void => {
-        this._currentViewSize += event.deltaY * 0.01;
+        this._currentViewSize *= 1.01 ** (event.deltaY * 0.1); 
         if (this._currentViewSize < this._minViewSize) {
             this._currentViewSize = this._minViewSize;
         } else if (this._currentViewSize > this._maxViewSize) {

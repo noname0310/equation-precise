@@ -19,7 +19,15 @@ export class Bootstrapper extends BaseBootstrapper {
 
         return this.sceneBuilder
             .withChild(instantiater.buildGameObject("graph-renderer")
-                .withComponent(GraphRenderer))
+                .withComponent(GraphRenderer)
+                .withComponent(CameraRelativeScaleController, c => {
+                    c.cameraRelativeScale = 0.002;
+                    const renderer = c.gameObject.getComponent(GraphRenderer)!;
+                    c.onZoom = (viewSize: number): void => {
+                        renderer.viewScale = viewSize;
+                    };
+                    c.cameraController = cameraController.ref!;
+                }))
 
             .withChild(instantiater.buildGameObject("camera")
                 .withComponent(Camera, c => {
