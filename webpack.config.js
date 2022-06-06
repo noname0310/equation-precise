@@ -8,7 +8,7 @@ module.exports = {
     output: {
         path: path.join(__dirname, "/dist"),
         filename: "[name].bundle.js",
-        assetModuleFilename: "images/[name][ext]",
+        assetModuleFilename: "assets/[name][ext]",
     },
     module: {
         rules: [
