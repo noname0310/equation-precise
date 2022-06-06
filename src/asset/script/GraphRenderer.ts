@@ -24,7 +24,7 @@ export class GraphRenderer extends Component {
         }
     }
 
-    private readonly _cameraRelativeChunkSize = 0.5;
+    private readonly _cameraRelativeChunkSize = 1;
     private readonly _chunkResolution = 512;
     private _chunkSize = NaN;
     private readonly _chunkObjectPool: CssHtmlElementRenderer[] = [];
@@ -211,7 +211,6 @@ export class GraphRenderer extends Component {
         );
         
         if (chunkStep !== this._lastChunkStep) {
-            console.log(`chunk step: ${chunkStep}`);
             this.clearChunks();
             this._lastChunkStep = chunkStep;
             this._chunkSize = this._lastChunkStep * this._cameraRelativeChunkSize;

@@ -19,7 +19,7 @@ export class CameraController extends Component {
 
     private _camera: Camera|null = null;
     private _mouseMoveButtonDown = false;
-    private _mouseMoveButton = 1;
+    private _mouseMoveButton = 0;
     private readonly _lastOffset: Vector2 = new Vector2();
     private _minViewSize = 0.1;
     private _maxViewSize = 1000;
