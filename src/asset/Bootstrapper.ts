@@ -10,6 +10,7 @@ import { CameraRelativeScaleController } from "./script/CameraRelativeScaleContr
 import { GraphRenderer } from "./script/GraphRenderer";
 import { GridRenderer } from "./script/GridRenderer";
 import { AxisRenderer } from "./script/AxisRenderer";
+import { GridUnitRenderer } from "./script/GridUnitRenderer";
 
 export class Bootstrapper extends BaseBootstrapper {
     public run(): SceneBuilder {
@@ -30,12 +31,10 @@ export class Bootstrapper extends BaseBootstrapper {
                 }))
 
             .withChild(instantiater.buildGameObject("camera", new Vector3(0, 0, -1))
-                .withComponent(Camera, c => {
-                    c.viewSize = 3;
-                })
+                .withComponent(Camera, c => c.viewSize = 4)
                 .withComponent(CameraController)
-                .getComponent(CameraController, cameraController)
                 .withComponent(GridRenderer)
+                .withComponent(GridUnitRenderer)
                 .withComponent(AxisRenderer)
                 .withComponent(CameraRelativeScaleController, c => {
                     c.cameraRelativeScale = 0.003;
@@ -46,7 +45,8 @@ export class Bootstrapper extends BaseBootstrapper {
                         axisRenderer.lineWidth = viewSize * 5;
                     };
                     c.cameraController = cameraController.ref!;
-                }))
+                })
+                .getComponent(CameraController, cameraController))
         ;
     }
 }

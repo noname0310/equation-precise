@@ -43,6 +43,8 @@ export class CameraController extends Component {
         this._defaultPosition.copy(this.transform.localPosition);
         this._currentViewSize = this._defaultViewSize;
         this._camera!.viewSize = this._currentViewSize;
+
+        this._onZoomEvent.invoke(this._currentViewSize);
     }
 
     public onEnable(): void {
@@ -70,6 +72,8 @@ export class CameraController extends Component {
             this._currentViewSize = this._defaultViewSize;
             this.resize();
             this.transform.localPosition.copy(this._defaultPosition);
+
+            this._onZoomEvent.invoke(this._currentViewSize);
         }
     };
 
