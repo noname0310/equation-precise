@@ -27,6 +27,7 @@ export class AxisRenderer extends Component {
         }
     }
 
+    private _axisObject: GameObject|null = null;
     private _xAxisObject: GameObject|null = null;
     private _yAxisObject: GameObject|null = null;
     private _xAxis: Css2DLineRenderer|null = null;
@@ -60,7 +61,7 @@ export class AxisRenderer extends Component {
         const xAxisObject = new PrefabRef<GameObject>();
         const yAxisObject = new PrefabRef<GameObject>();
 
-        this.engine.scene.addChildFromBuilder(
+        this._axisObject = this.engine.scene.addChildFromBuilder(
             this.engine.instantiater.buildGameObject("axis-renderer-axis")
                 .withChild(this.engine.instantiater.buildGameObject("axis-renderer-x-axis")
                     .withComponent(Css2DLineRenderer, c => {
@@ -104,8 +105,11 @@ export class AxisRenderer extends Component {
     public onDestroy(): void {
         this._cameraController!.onZoom.removeListener(this.onZoom);
         this.engine.screen.onResize.removeListener(this.onScreenResize);
-        this._xAxisObject?.destroy();
+
+        this._axisObject?.destroy();
+        this._axisObject = null;
         this._xAxisObject = null;
+        this._yAxisObject = null;
         this._xAxis = null;
         this._yAxis = null;
     }
