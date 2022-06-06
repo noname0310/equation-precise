@@ -9,6 +9,8 @@ import {
 import Queue from "js-sdsl/dist/esm/Queue/Queue";
 
 export class GraphRenderer extends Component {
+    private readonly _graph = Math.sin;
+
     private _viewScale = 0.01;
 
     public get viewScale(): number {
@@ -35,19 +37,15 @@ export class GraphRenderer extends Component {
                 this.engine.instantiater.buildGameObject("chunk-object")
                     .active(false)
                     .withComponent(CssHtmlElementRenderer, c => {
-                        const div = document.createElement("div");
                         const canvas = document.createElement("canvas");
                         canvas.style.width = "100%";
                         canvas.style.height = "100%";
+                        canvas.style.position = "absolute";
+                        canvas.style.top = "0";
+                        canvas.style.left = "0";
                         canvas.width = this._chunkResolution;
                         canvas.height = this._chunkResolution;
-                        div.appendChild(canvas);
-                        c.element = div;
-                        const ctx = canvas.getContext("2d")!;
-                        //drawing
-                        ctx.arc(512 / 2, 512 / 2, 300, 0, 2 * Math.PI);
-                        ctx.fillStyle = "#39C5BB44";
-                        ctx.fill();
+                        c.element = canvas;
                     })
                     .getComponent(CssHtmlElementRenderer, renderer)
             );
@@ -66,7 +64,6 @@ export class GraphRenderer extends Component {
     private readonly _activeChunks = new Map<`${number}_${number}`, CssHtmlElementRenderer>();
 
     private *renderChunk(camera: Camera): CoroutineIterator {
-        console.log("renderChunk");
         let procedureStartTime = performance.now();
 
         //cull chunks
@@ -79,7 +76,6 @@ export class GraphRenderer extends Component {
                 this._activeChunks.delete(chunkKey);
             }
         }
-        console.log("cull chunks", performance.now() - procedureStartTime);
 
         //if cull took more than 100ms, yield
         if (100 < performance.now() - procedureStartTime) {
@@ -99,7 +95,7 @@ export class GraphRenderer extends Component {
         const dx = [1, 0, -1, 0];
         const dy = [0, 1, 0, -1];
 
-        //let a = 0;
+        let debugThrottleV = 0;
 
         while (!queue.empty()) {
             //if render took more than 100ms, yield
@@ -108,7 +104,7 @@ export class GraphRenderer extends Component {
                 yield null;
             }
             //debug throttle
-            //if (a++ % 10 == 0) yield null;
+            if (debugThrottleV++ % 10 == 0) yield null;
 
             const chunkX = queue.front()!.x;
             const chunkY = queue.front()!.y;
@@ -139,15 +135,14 @@ export class GraphRenderer extends Component {
             
             const chunkPosition = chunkObject.transform.position;
             const chunkSizeHalf = this._chunkSize * 0.5;
-            chunkObject.viewScale = this._viewScale;
-            this.computeSamples(
-                (x: number) => Math.sin(x) * 3,
+            this.drawGraph(
+                (chunkObject.element! as HTMLCanvasElement).getContext("2d")!,
+                this._graph,
                 chunkPosition.x - chunkSizeHalf, chunkPosition.x + chunkSizeHalf,
-                chunkPosition.y - chunkSizeHalf, chunkPosition.y + chunkSizeHalf,
-                chunkPosition.x, chunkPosition.y
+                chunkPosition.x, chunkPosition.y,
+                this._viewScale / this._chunkSize
             );
         }
-        console.log("render chunks", performance.now() - procedureStartTime);
     }
 
     private clearChunks(): void {
@@ -157,29 +152,43 @@ export class GraphRenderer extends Component {
         this._activeChunks.clear();
     }
 
-    private readonly _sampleCount = 100;
+    private readonly _sampleCount = 32;
 
-    private computeSamples(
+    private drawGraph(
+        ctx: CanvasRenderingContext2D,
         func: (x: number) => number,
-        left: number, right: number, top: number, bottom: number,
-        offsetX: number, offsetY: number
-    ): Vector2[] {
-        const samples: Vector2[] = [];
+        left: number, right: number,
+        offsetX: number, offsetY: number,
+        strokeWidth: number
+    ): void {
+        ctx.clearRect(0, 0, this._chunkResolution, this._chunkResolution);
+
+        // ctx.beginPath();
+        // ctx.arc(this._chunkResolution * 0.5, this._chunkResolution * 0.5, this._chunkResolution * 0.5, 0, Math.PI * 2);
+        // ctx.stroke();
+        // ctx.closePath();
+
+        ctx.beginPath();
         const step = (right - left) / this._sampleCount;
-        for (let i = 0; i < this._sampleCount; i++) {
-            const x = left + i * step;
+        for (let x = left - step; x <= right + step; x += step) {
             const y = func(x);
-            if (top <= y && y <= bottom) {
-                samples.push(new Vector2(x - offsetX, y - offsetY));
-            }
+
+            const localX = x - offsetX;
+            const localY = y - offsetY;
+
+            const canvasX = localX * this._chunkResolution / this._chunkSize + this._chunkResolution * 0.5;
+            const canvasY = -localY * this._chunkResolution / this._chunkSize + this._chunkResolution * 0.5;
+
+            ctx.lineTo(canvasX, canvasY);
         }
-        samples.push(new Vector2(right - offsetX, func(right) - offsetY));
-        return samples;
+        ctx.strokeStyle = "#000000";
+        ctx.lineWidth = strokeWidth;
+        ctx.stroke();
+        ctx.closePath();
     }
 
     private readonly _lastCameraPosition = new Vector2(NaN, NaN);
     private _lastCameraViewSize = NaN;
-    private readonly _chunkSizeStep = 100;
     private _lastChunkStep = NaN;
 
     public update(): void {
@@ -194,13 +203,18 @@ export class GraphRenderer extends Component {
             viewSize === this._lastCameraViewSize) return;
         lastCameraPosition.set(cameraPosition.x, cameraPosition.y);
         this._lastCameraViewSize = viewSize;
+
+        const chunkStep = Math.max(
+            10 ** Math.floor(Math.log10(viewSize)),
+            0.5 * 10 ** Math.floor(Math.log10(viewSize / 0.5)),
+            0.2 * 10 ** Math.floor(Math.log10(viewSize / 0.2))
+        );
         
-        const chunkStep = Math.floor(Math.sqrt(viewSize) / this._chunkSizeStep) * 100 / 10;
-        console.log(chunkStep);
         if (chunkStep !== this._lastChunkStep) {
+            console.log(`chunk step: ${chunkStep}`);
             this.clearChunks();
             this._lastChunkStep = chunkStep;
-            this._chunkSize = viewSize * this._cameraRelativeChunkSize;
+            this._chunkSize = this._lastChunkStep * this._cameraRelativeChunkSize;
         }
         this.startCoroutine(this.renderChunk(camera));
     }

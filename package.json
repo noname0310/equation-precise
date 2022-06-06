@@ -25,6 +25,6 @@
     },
     "dependencies": {
         "html-loader": "^3.1.0",
-        "the-world-engine": "^0.4.10"
+        "the-world-engine": "^0.4.11"
     }
 }
