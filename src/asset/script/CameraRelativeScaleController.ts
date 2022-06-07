@@ -40,4 +40,12 @@ export class CameraRelativeScaleController extends Component {
             this.onZoomInternal(this._cameraController.viewSize);
         }
     }
+
+    public onDestroy(): void {
+        if (this._cameraController) {
+            this._cameraController.onZoom.removeListener(this.onZoomInternal);
+        }
+
+        this._cameraController = null;
+    }
 }
