@@ -262,4 +262,15 @@ export class GraphRenderer extends Component {
 
         return !chunkIsInFrustum;
     }
+
+    public onDestroy(): void {
+        this.clearChunks();
+        const chunkObjectPool = this._chunkObjectPool;
+        for (let i = chunkObjectPool.length - 1; i >= 0; i--) {
+            const chunkObject = chunkObjectPool[i];
+            chunkObject.gameObject.destroy();
+        }
+
+        this._chunkObjectPool.length = 0;
+    }
 }
