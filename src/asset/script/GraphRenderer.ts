@@ -56,7 +56,7 @@ export class GraphRenderer extends Component {
         return chunkObject;
     }
 
-    private returnChunkObject(chunkObject: CssHtmlElementRenderer): void {
+    private releaseChunkObject(chunkObject: CssHtmlElementRenderer): void {
         chunkObject.gameObject.activeSelf = false;
         this._chunkObjectPool.push(chunkObject);
     }
@@ -72,7 +72,7 @@ export class GraphRenderer extends Component {
             const chunkY = parseInt(chunkKey.split("_")[1]);
 
             if (this.is2DFrustumCulled(camera, chunkX, chunkY)) {
-                this.returnChunkObject(this._activeChunks.get(chunkKey)!);
+                this.releaseChunkObject(this._activeChunks.get(chunkKey)!);
                 this._activeChunks.delete(chunkKey);
             }
         }
@@ -147,7 +147,7 @@ export class GraphRenderer extends Component {
 
     private clearChunks(): void {
         for (const chunkObject of this._activeChunks.values()) {
-            this.returnChunkObject(chunkObject);
+            this.releaseChunkObject(chunkObject);
         }
         this._activeChunks.clear();
     }
