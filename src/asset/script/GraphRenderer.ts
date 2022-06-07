@@ -7,6 +7,7 @@ import {
     PrefabRef
 } from "the-world-engine";
 import Queue from "js-sdsl/dist/esm/Queue/Queue";
+import { GraphMath } from "./GraphMath";
 
 export class GraphRenderer extends Component {
     private readonly _graph = Math.sin;
@@ -24,7 +25,7 @@ export class GraphRenderer extends Component {
         }
     }
 
-    private readonly _cameraRelativeChunkSize = 1;
+    private readonly _cameraRelativeChunkSize = 2;
     private readonly _chunkResolution = 512;
     private _chunkSize = NaN;
     private readonly _chunkObjectPool: CssHtmlElementRenderer[] = [];
@@ -204,12 +205,7 @@ export class GraphRenderer extends Component {
         lastCameraPosition.set(cameraPosition.x, cameraPosition.y);
         this._lastCameraViewSize = viewSize;
 
-        const chunkStep = Math.max(
-            10 ** Math.floor(Math.log10(viewSize)),
-            0.5 * 10 ** Math.floor(Math.log10(viewSize / 0.5)),
-            0.2 * 10 ** Math.floor(Math.log10(viewSize / 0.2))
-        );
-        
+        const chunkStep = GraphMath.computeLod(viewSize);
         if (chunkStep !== this._lastChunkStep) {
             this.clearChunks();
             this._lastChunkStep = chunkStep;

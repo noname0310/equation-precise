@@ -7,6 +7,7 @@ import {
 } from "the-world-engine";
 import { Vector3 } from "three/src/Three";
 import { CameraController } from "./CameraController";
+import { GraphMath } from "./GraphMath";
 
 /**
  * editor grid renderer for debug
@@ -34,11 +35,7 @@ export class GridRenderer extends Component {
             const aspect = width / height;
             this._htmlRenderer!.elementWidth = viewSize * 2 * aspect;
             this._htmlRenderer!.elementHeight = viewSize * 2;
-            this._gridCellScalar = Math.max(
-                10 ** Math.floor(Math.log10(viewSize)),
-                0.5 * 10 ** Math.floor(Math.log10(viewSize / 0.5)),
-                0.2 * 10 ** Math.floor(Math.log10(viewSize / 0.2))
-            );
+            this._gridCellScalar = GraphMath.computeLod(viewSize);
 
             this._htmlRenderer.element!.style.backgroundSize =
                 this._gridCellScalar / this._viewScale + "px " +
