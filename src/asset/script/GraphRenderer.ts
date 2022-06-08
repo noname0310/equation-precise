@@ -11,7 +11,7 @@ import { GraphMath } from "./GraphMath";
 
 export class GraphRenderer extends Component {
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    private readonly _graph = (x: number): number => Math.sqrt(1 - x**2);
+    private readonly _graph = (x: number): number => Math.sin(Math.cos(x) * Math.log(x)) * 2 ** Math.log(x);
 
     private _viewScale = 0.01;
 
@@ -154,7 +154,7 @@ export class GraphRenderer extends Component {
         this._activeChunks.clear();
     }
 
-    private readonly _sampleCount = 32;
+    private readonly _sampleCount = 32 * 10;
 
     private drawGraph(
         ctx: CanvasRenderingContext2D,
