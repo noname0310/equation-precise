@@ -102,29 +102,49 @@ export class GridUnitRenderer extends Component {
         if ((cameraPosition.y - viewSize) > 0) yUnitStartPosition = 1 - yUnitStartPosition;
         const yUnitStartValue = viewSize * -1 + cameraPosition.y + yUnitStartPosition;
 
-        console.log(xUnitStartValue, yUnitStartValue);
+        let xUnitYposition;
+        
+        if (viewSize < cameraPosition.y) {
+            xUnitYposition = -viewSize;
+        } else if (-viewSize + 0.07 * viewSize > cameraPosition.y) {
+            xUnitYposition = viewSize - 0.07 * viewSize;
+        } else {
+            xUnitYposition = -cameraPosition.y;
+        }
 
         for (let i = 0; i < xUnitCount; ++i) {
             const xPosition = xUnitStartPosition + i * lodScale - viewSize * aspect;
 
             const textObject = this.getTextObject();
             this._activeTextX.set(xPosition, textObject);
-            textObject.text = `${(xUnitStartValue + i * lodScale).toFixed(2)}`;
+            textObject.text = `${(xUnitStartValue * lodScale + i * lodScale).toFixed(2)}`;
 
             const localPosition = textObject.transform.localPosition;
             localPosition.x = xPosition;
-            localPosition.y = 0;
+
+            localPosition.y = xUnitYposition;
+        }
+
+        let yUnitXposition;
+
+        const yViewSize = viewSize * aspect;
+        if (yViewSize < cameraPosition.x) {
+            yUnitXposition = -yViewSize;
+        } else if (-yViewSize + 0.2 * viewSize > cameraPosition.x) {
+            yUnitXposition = yViewSize - 0.2 * viewSize;
+        } else {
+            yUnitXposition = -cameraPosition.x;
         }
 
         for (let i = 0; i < yUnitCount; ++i) {
-            const yPosition = yUnitStartPosition + i * lodScale - viewSize;
+            const yPosition = (yUnitStartPosition + i) * lodScale - viewSize;
 
             const textObject = this.getTextObject();
             this._activeTextY.set(yPosition, textObject);
             textObject.text = `${(yUnitStartValue + i * lodScale).toFixed(2)}`;
 
             const localPosition = textObject.transform.localPosition;
-            localPosition.x = 0;
+            localPosition.x = yUnitXposition;
             localPosition.y = yPosition;
         }
 
