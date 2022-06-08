@@ -93,14 +93,15 @@ export class GridUnitRenderer extends Component {
         this._activeTextY.clear();
 
         const cameraPosition = camera.transform.position;
-
         let xUnitStartPosition = Math.abs((cameraPosition.x - viewSize * aspect) % lodScale);
-        if ((cameraPosition.x - viewSize * aspect) > 0) xUnitStartPosition = 1 - xUnitStartPosition;
+        if ((cameraPosition.x - viewSize * aspect) > 0) xUnitStartPosition = lodScale - xUnitStartPosition;
         const xUnitStartValue = (viewSize * aspect * -1 + cameraPosition.x) + xUnitStartPosition;
 
         let yUnitStartPosition = Math.abs((cameraPosition.y - viewSize) % lodScale);
-        if ((cameraPosition.y - viewSize) > 0) yUnitStartPosition = 1 - yUnitStartPosition;
+        if ((cameraPosition.y - viewSize) > 0) yUnitStartPosition = lodScale - yUnitStartPosition;
         const yUnitStartValue = viewSize * -1 + cameraPosition.y + yUnitStartPosition;
+
+        //#region xUnitYposition
 
         let xUnitYposition;
         
@@ -112,12 +113,14 @@ export class GridUnitRenderer extends Component {
             xUnitYposition = -cameraPosition.y;
         }
 
+        //#endregion
+
         for (let i = 0; i < xUnitCount; ++i) {
             const xPosition = xUnitStartPosition + i * lodScale - viewSize * aspect;
 
             const textObject = this.getTextObject();
             this._activeTextX.set(xPosition, textObject);
-            textObject.text = `${(xUnitStartValue * lodScale + i * lodScale).toFixed(2)}`;
+            textObject.text = `${Number((xUnitStartValue + i * lodScale).toFixed(3))}`;
 
             const localPosition = textObject.transform.localPosition;
             localPosition.x = xPosition;
@@ -125,23 +128,27 @@ export class GridUnitRenderer extends Component {
             localPosition.y = xUnitYposition;
         }
 
+        //#region yUnitXposition
+
         let yUnitXposition;
 
         const yViewSize = viewSize * aspect;
         if (yViewSize < cameraPosition.x) {
             yUnitXposition = -yViewSize;
-        } else if (-yViewSize + 0.2 * viewSize > cameraPosition.x) {
-            yUnitXposition = yViewSize - 0.2 * viewSize;
+        } else if (-yViewSize + 0.12 * viewSize > cameraPosition.x) {
+            yUnitXposition = yViewSize - 0.12 * viewSize;
         } else {
             yUnitXposition = -cameraPosition.x;
         }
+        
+        //#endregion
 
         for (let i = 0; i < yUnitCount; ++i) {
-            const yPosition = (yUnitStartPosition + i) * lodScale - viewSize;
+            const yPosition = yUnitStartPosition + i * lodScale - viewSize;
 
             const textObject = this.getTextObject();
             this._activeTextY.set(yPosition, textObject);
-            textObject.text = `${(yUnitStartValue + i * lodScale).toFixed(2)}`;
+            textObject.text = `${Number((yUnitStartValue + i * lodScale).toFixed(3))}`;
 
             const localPosition = textObject.transform.localPosition;
             localPosition.x = yUnitXposition;
