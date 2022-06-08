@@ -11,7 +11,7 @@ import { GraphMath } from "./GraphMath";
 
 export class GraphRenderer extends Component {
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    private readonly _graph = (x: number): number => Math.sin(x);
+    private readonly _graph = (x: number): number => Math.sqrt(1 - x**2);
 
     private _viewScale = 0.01;
 
