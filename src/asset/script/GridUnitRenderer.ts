@@ -48,6 +48,8 @@ export class GridUnitRenderer extends Component {
                     .active(false)
                     .withComponent(CssTextRenderer, c => {
                         c.textColor = new Color(0, 0, 0);
+                        c.autoSize = true;
+                        c.centerOffset = new Vector2(0.7, 0.7);
                     })
                     .getComponent(CssTextRenderer, newTextObject)
             );
@@ -65,7 +67,7 @@ export class GridUnitRenderer extends Component {
     }
     
     private readonly _activeTextX: Map<number, CssTextRenderer> = new Map();
-    // private readonly _activeTextY: Map<number, CssTextRenderer> = new Map();
+    private readonly _activeTextY: Map<number, CssTextRenderer> = new Map();
 
     private renderGridUnit(camera: Camera): void {
         const viewSize = camera.viewSize;
@@ -80,18 +82,58 @@ export class GridUnitRenderer extends Component {
         let xUnitCount = Math.floor(viewSize * aspect / lodScale) * 2 + 1;
         if (xUnitCount % 2 === 0) xUnitCount -= 1;
 
-        for (const text of this._activeTextX.values()) {
-            this.releaseTextObject(text);
+        for (const textObject of this._activeTextX.values()) {
+            this.releaseTextObject(textObject);
         }
         this._activeTextX.clear();
 
-        for (let i = 0; i < xUnitCount; ++i) {
-            const textObject = this.getTextObject();
-            this._activeTextX.set(i * lodScale, textObject);
+        for (const textObject of this._activeTextY.values()) {
+            this.releaseTextObject(textObject);
+        }
+        this._activeTextY.clear();
 
-            const position = textObject.transform.position;
-            position.x = i * lodScale;
-            position.y = 0;
+        const cameraPosition = camera.transform.position;
+
+        let xUnitStartPosition = Math.abs((cameraPosition.x - viewSize * aspect) % lodScale);
+        if ((cameraPosition.x - viewSize * aspect) > 0) xUnitStartPosition = 1 - xUnitStartPosition;
+        const xUnitStartValue = (viewSize * aspect * -1 + cameraPosition.x) + xUnitStartPosition;
+
+        let yUnitStartPosition = Math.abs((cameraPosition.y - viewSize) % lodScale);
+        if ((cameraPosition.y - viewSize) > 0) yUnitStartPosition = 1 - yUnitStartPosition;
+        const yUnitStartValue = viewSize * -1 + cameraPosition.y + yUnitStartPosition;
+
+        console.log(xUnitStartValue, yUnitStartValue);
+
+        for (let i = 0; i < xUnitCount; ++i) {
+            const xPosition = xUnitStartPosition + i * lodScale - viewSize * aspect;
+
+            const textObject = this.getTextObject();
+            this._activeTextX.set(xPosition, textObject);
+            textObject.text = `${(xUnitStartValue + i * lodScale).toFixed(2)}`;
+
+            const localPosition = textObject.transform.localPosition;
+            localPosition.x = xPosition;
+            localPosition.y = 0;
+        }
+
+        for (let i = 0; i < yUnitCount; ++i) {
+            const yPosition = yUnitStartPosition + i * lodScale - viewSize;
+
+            const textObject = this.getTextObject();
+            this._activeTextY.set(yPosition, textObject);
+            textObject.text = `${(yUnitStartValue + i * lodScale).toFixed(2)}`;
+
+            const localPosition = textObject.transform.localPosition;
+            localPosition.x = 0;
+            localPosition.y = yPosition;
+        }
+
+        for (const text of this._activeTextX.values()) {
+            text.viewScale = viewSize * 0.005;
+        }
+
+        for (const text of this._activeTextY.values()) {
+            text.viewScale = viewSize * 0.005;
         }
     }
 
