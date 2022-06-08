@@ -10,7 +10,8 @@ import Queue from "js-sdsl/dist/esm/Queue/Queue";
 import { GraphMath } from "./GraphMath";
 
 export class GraphRenderer extends Component {
-    private readonly _graph = Math.sin;
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    private readonly _graph = (x: number): number => Math.sin(x);
 
     private _viewScale = 0.01;
 
