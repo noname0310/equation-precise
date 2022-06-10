@@ -1,4 +1,4 @@
-use super::TokenNumberLiteral;
+use crate::TokenNumberLiteral;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, PartialOrd, Ord, Hash)]
 pub enum TokenKind {
