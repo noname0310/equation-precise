@@ -9,63 +9,76 @@ use unicode_xid::UnicodeXID;
 
 pub fn token_iter(mut input: &str) -> impl Iterator<Item = Token> + '_ {
     iter_from_fn(move || {
+        let mut cursor = Cursor::new(input);
+        consume_whitespace(&mut cursor);
+        input = &input[cursor.len_consumed()..];
+
         if input.is_empty() {
             return None;
         }
 
-        let token = next(input);
-        input = &input[token.len()..];
+        let (token, consume_len) = next(input);
+        input = &input[consume_len..];
         Some(token)
     })
 }
 
-fn next(input: &str) -> Token {
+fn next(input: &str) -> (Token, usize) {
     let mut cursor = Cursor::new(input);
+
     let kind = match cursor.consume().unwrap() {
-        char if char.is_whitespace() => {
-            consume_while(&mut cursor, |char| char.is_whitespace());
-            TokenKind::Whitespace
-        }
         char if is_id_start(char) => {
             consume_while(&mut cursor, |char| is_id_continue(char));
-            TokenKind::Id
+            Token::Id
         }
-        char @ '0'..='9' => {
-            consume_number(&mut cursor, char);
+        '0'..='9' => {
+            consume_number(&mut cursor);
             let suffix_start = cursor.len_consumed();
 
-            if is_id_start(cursor.first()) {
-                cursor.consume();
-                consume_while(&mut cursor, |char| is_id_continue(char));
-            }
-
-            TokenKind::Literal(TokenNumberLiteral::new(suffix_start))
+            Token::NumberLiteral(input[..suffix_start].to_string())
         }
-        '(' => TokenKind::OpenParen,
-        ')' => TokenKind::CloseParen,
-        '.' => TokenKind::Dot,
-        ',' => TokenKind::Comma,
-        '=' => TokenKind::Eq,
-        '<' => TokenKind::Lt,
-        '>' => TokenKind::Gt,
-        '+' => TokenKind::Plus,
-        '-' => TokenKind::Minus,
-        '*' => TokenKind::Star,
-        '/' => TokenKind::Slash,
-        '%' => TokenKind::Percent,
-        '|' => TokenKind::Or,
-        '&' => TokenKind::And,
-        '^' => TokenKind::Caret,
-        _ => TokenKind::Unknown,
+        '(' => Token::OpenParen,
+        ')' => Token::CloseParen,
+        ',' => Token::Comma,
+        '=' => Token::Eq,
+        '<' => {
+            consume_whitespace(&mut cursor);
+            if cursor.lookup(0) == '=' {
+                cursor.consume();
+                Token::Le
+            } else {
+                Token::Lt
+            }
+        },
+        '>' => {
+            consume_while(&mut cursor, |char| char.is_whitespace());
+            if cursor.lookup(0) == '=' {
+                cursor.consume();
+                Token::Ge
+            } else {
+                Token::Gt
+            }
+        },
+        '+' => Token::Plus,
+        '-' => Token::Minus,
+        '*' => Token::Star,
+        '/' => Token::Slash,
+        '%' => Token::Percent,
+        '^' => Token::Caret,
+        _ => Token::Unknown,
     };
 
-    Token::new(kind, cursor.len_consumed())
+    (kind, cursor.len_consumed())
 }
 
 fn consume_while(cursor: &mut Cursor, mut pred: impl FnMut(char) -> bool) {
     while pred(cursor.first()) {
         cursor.consume();
     }
+}
+
+fn consume_whitespace(cursor: &mut Cursor) {
+    consume_while(cursor, |char| char.is_whitespace());
 }
 
 fn is_id_start(char: char) -> bool {
@@ -83,22 +96,20 @@ fn is_id_continue(char: char) -> bool {
         || (char > '\x7f' && UnicodeXID::is_xid_continue(char))
 }
 
-fn consume_number(cursor: &mut Cursor, first_char: char) {
-    if first_char == '0' {
-        match cursor.first() {
-            '0'..='9' => {
-                cursor.consume();
-                consume_while(cursor, |char| char.is_digit(10));
-            }
-            '.' => {},
-            _ => return,
-        }
-    }
-
+fn consume_number(cursor: &mut Cursor) {
     match cursor.first() {
         '.' if cursor.second().is_digit(10) => {
             cursor.consume();
             consume_while(cursor, |char| char.is_digit(10));
+        }
+        '0'..='9' => {
+            cursor.consume();
+            consume_while(cursor, |char| char.is_digit(10));
+
+            if cursor.first() == '.' {
+                cursor.consume();
+                consume_while(cursor, |char| char.is_digit(10));
+            }
         }
         _ => {
             consume_while(cursor, |char| char.is_digit(10));
