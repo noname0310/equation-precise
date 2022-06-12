@@ -6,7 +6,6 @@ pub enum Expr {
     Gt(Box<Expr>, Box<Expr>),
     Le(Box<Expr>, Box<Expr>),
     Ge(Box<Expr>, Box<Expr>),
-    Neg(Box<Expr>),
     Add(Box<Expr>, Box<Expr>),
     Sub(Box<Expr>, Box<Expr>),
     Mul(Box<Expr>, Box<Expr>),

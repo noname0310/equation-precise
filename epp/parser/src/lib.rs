@@ -7,9 +7,9 @@ use lexer::Token;
 use diagnostic::{Diagnostic, Level};
 
 /// number_expr ::= number
-fn parse_number_expr(ctx: &mut ParserContext, number: String) -> Box<Expr> {
+fn parse_number_expr(ctx: &mut ParserContext, number: String, negative: bool) -> Box<Expr> {
     ctx.next_token();
-    return Box::new(Expr::Literal(number.parse::<f64>().unwrap()));
+    return Box::new(Expr::Literal(number.parse::<f64>().unwrap() * if negative { -1.0 } else { 1.0 }));
 }
 
 /// paren_expr ::= '(' expression ')'
@@ -84,7 +84,23 @@ fn parse_primary(ctx: &mut ParserContext) -> Result<Box<Expr>, ()> {
                 },
                 Token::NumberLiteral(number) => {
                     let number = number.to_owned();
-                    Ok(parse_number_expr(ctx, number))
+                    Ok(parse_number_expr(ctx, number, false))
+                },
+                Token::Minus => {
+                    ctx.next_token();
+                    match ctx.current_token() {
+                        Some(Token::NumberLiteral(number)) => {
+                            let number = number.to_owned();
+                            Ok(parse_number_expr(ctx, number, true))
+                        },
+                        _ => {
+                            Diagnostic::push_new(Diagnostic::new(
+                                Level::Error,
+                                "Expected number after '-'".to_string(),
+                            ));
+                            Err(())
+                        }
+                    }
                 },
                 Token::OpenParen => parse_paren_expr(ctx),
                 _ => {
