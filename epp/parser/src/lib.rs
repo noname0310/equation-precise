@@ -140,6 +140,8 @@ fn parse_bin_op_rhs(ctx: &mut ParserContext, expr_precedence: i32, mut lhs: Box<
                 Token::Eq => Expr::Eq(lhs, rhs),
                 Token::Lt => Expr::Lt(lhs, rhs),
                 Token::Gt => Expr::Gt(lhs, rhs),
+                Token::Le => Expr::Le(lhs, rhs),
+                Token::Ge => Expr::Ge(lhs, rhs),
                 Token::Plus => Expr::Add(lhs, rhs),
                 Token::Minus => Expr::Sub(lhs, rhs),
                 Token::Star => Expr::Mul(lhs, rhs),
@@ -157,15 +159,20 @@ fn parse_bin_op_rhs(ctx: &mut ParserContext, expr_precedence: i32, mut lhs: Box<
 ///
 fn parse_expression(ctx: &mut ParserContext) -> Result<Box<Expr>, ()> {
     let lhs = parse_primary(ctx)?;
-    // debuged here
     return parse_bin_op_rhs(ctx, 0, lhs);
 }
 
-//===----------------------------------------------------------------------===//
-// Top-Level parsing
-//===----------------------------------------------------------------------===//
-
 pub fn parse_top_level_expression(mut ctx: ParserContext) -> Result<Box<Expr>, ()> {
     ctx.next_token();
-    parse_expression(&mut ctx)
+    let result = parse_expression(&mut ctx);
+
+    if ctx.next_token().is_some() {
+        Diagnostic::push_new(Diagnostic::new(
+            Level::Error,
+            "unexpected token after top-level expression".to_string(),
+        ));
+        Err(())
+    } else {
+        result
+    }
 }
