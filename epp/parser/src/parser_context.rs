@@ -5,11 +5,11 @@ use lexer::Token;
 pub struct ParserContext<'a> {
     current_token: Option<Token>,
     token_iter: Box<dyn Iterator<Item = Token> + 'a>,
-    binary_op_precedence: HashMap<String, i32>,
+    binary_op_precedence: HashMap<&'static str, i32>,
 }
 
 impl <'a>ParserContext<'_> {
-    pub fn new(token_iter: Box<dyn Iterator<Item = Token> + 'a>, binary_op_precedence: HashMap<String, i32>) -> ParserContext<'a> {
+    pub fn new(token_iter: Box<dyn Iterator<Item = Token> + 'a>, binary_op_precedence: HashMap<&'static str, i32>) -> ParserContext<'a> {
         ParserContext {
             current_token: None,
             token_iter,
@@ -31,12 +31,19 @@ impl <'a>ParserContext<'_> {
     }
 }
 
-pub fn create_binary_op_precedence() -> HashMap<String, i32> {
+pub fn create_binary_op_precedence() -> HashMap<&'static str, i32> {
     let mut map = HashMap::new();
-    map.insert("<".to_owned(), 10);
-    map.insert("+".to_owned(), 20);
-    map.insert("-".to_owned(), 20);
-    map.insert("*".to_owned(), 40);// highest.
+    map.insert(Token::Lt.to_str(), 10);
+    map.insert(Token::Gt.to_str(), 10);
+    map.insert(Token::Le.to_str(), 10);
+    map.insert(Token::Ge.to_str(), 10);
+    map.insert(Token::Eq.to_str(), 10);
+    map.insert(Token::Plus.to_str(), 20);
+    map.insert(Token::Minus.to_str(), 20);
+    map.insert(Token::Star.to_str(), 40);
+    map.insert(Token::Slash.to_str(), 40);
+    map.insert(Token::Percent.to_str(), 40);
+    map.insert(Token::Caret.to_str(), 50);
 
     map
 }

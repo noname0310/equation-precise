@@ -7,13 +7,9 @@ use lexer::Token;
 use diagnostic::{Diagnostic, Level};
 
 /// number_expr ::= number
-fn parse_number_expr(ctx: &mut ParserContext) -> Box<Expr> {
-    if let Token::NumberLiteral(number) = ctx.current_token().unwrap() {
-        let number = number.to_owned();
-        ctx.next_token();
-        return Box::new(Expr::Literal(number.parse::<f64>().unwrap()));
-    }
-    unreachable!()
+fn parse_number_expr(ctx: &mut ParserContext, number: String) -> Box<Expr> {
+    ctx.next_token();
+    return Box::new(Expr::Literal(number.parse::<f64>().unwrap()));
 }
 
 /// paren_expr ::= '(' expression ')'
@@ -36,48 +32,41 @@ fn parse_paren_expr(ctx: &mut ParserContext) -> Result<Box<Expr>, ()> {
 /// identifier_expr
 ///   ::= identifier
 ///   ::= identifier '(' expression* ')'
-fn parse_identifier_expr(ctx: &mut ParserContext) -> Result<Box<Expr>, ()> {
-    if let Token::Id(id_name) = ctx.current_token().unwrap() {
-        let id_name = id_name.to_owned();
+fn parse_identifier_expr(ctx: &mut ParserContext, id_name: String) -> Result<Box<Expr>, ()> {
+    ctx.next_token(); // eat identifier.
 
-        ctx.next_token(); // eat identifier.
-
-        match ctx.current_token() {
-            Some(&Token::OpenParen) => {
-                // Call.
-                ctx.next_token(); // eat (
-                let mut args = Vec::new();
-                if ctx.current_token().unwrap() != &Token::CloseParen {
-                    loop {
-                        let arg = parse_expression(ctx)?;
-                        args.push(*arg);
-                        
-                        if ctx.current_token().unwrap() == &Token::CloseParen {
-                            break;
-                        }
-            
-                        if ctx.current_token().unwrap() != &Token::Comma {
-                            Diagnostic::push_new(Diagnostic::new(
-                                Level::Error,
-                                "Expected ')' or ',' in argument list".to_string(),
-                            ));
-                            return Err(());
-                        }
-                        ctx.next_token();
+    match ctx.current_token() {
+        Some(&Token::OpenParen) => {
+            // Call.
+            ctx.next_token(); // eat (
+            let mut args = Vec::new();
+            if ctx.current_token().unwrap() != &Token::CloseParen {
+                loop {
+                    let arg = parse_expression(ctx)?;
+                    args.push(*arg);
+                    
+                    if let Some(Token::CloseParen) = ctx.current_token() {
+                        break;
+                    } else if ctx.current_token().map_or(true, |tok| tok != &Token::Comma) {
+                        Diagnostic::push_new(Diagnostic::new(
+                            Level::Error,
+                            "Expected ')' or ',' in argument list".to_string(),
+                        ));
+                        return Err(());
                     }
+
+                    ctx.next_token();
                 }
-        
-                // Eat the ')'.
-                ctx.next_token();
-            
-                return Ok(Box::new(Expr::Call(id_name.to_owned(), args)));
-            },
-            _ => { // Simple variable ref.
-                return Ok(Box::new(Expr::Id(id_name)));
             }
+    
+            // Eat the ')'.
+            ctx.next_token();
+        
+            return Ok(Box::new(Expr::Call(id_name.to_owned(), args)));
+        },
+        _ => { // Simple variable ref.
+            return Ok(Box::new(Expr::Id(id_name)));
         }
-    } else {
-        unreachable!()
     }
 }
 
@@ -89,8 +78,14 @@ fn parse_primary(ctx: &mut ParserContext) -> Result<Box<Expr>, ()> {
     match ctx.current_token() {
         Some(token) => {
             match token {
-                Token::Id(..) => parse_identifier_expr(ctx),
-                Token::NumberLiteral(..) => Ok(parse_number_expr(ctx)),
+                Token::Id(id_name) => {
+                    let id_name = id_name.to_owned();
+                    parse_identifier_expr(ctx, id_name)
+                },
+                Token::NumberLiteral(number) => {
+                    let number = number.to_owned();
+                    Ok(parse_number_expr(ctx, number))
+                },
                 Token::OpenParen => parse_paren_expr(ctx),
                 _ => {
                     Diagnostic::push_new(Diagnostic::new(
