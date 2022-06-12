@@ -7,9 +7,9 @@ use lexer::Token;
 use diagnostic::{Diagnostic, Level};
 
 /// number_expr ::= number
-fn parse_number_expr(ctx: &mut ParserContext, number: String, negative: bool) -> Box<Expr> {
+fn parse_number_expr(ctx: &mut ParserContext, number: String) -> Box<Expr> {
     ctx.next_token();
-    return Box::new(Expr::Literal(number.parse::<f64>().unwrap() * if negative { -1.0 } else { 1.0 }));
+    return Box::new(Expr::Literal(number.parse::<f64>().unwrap()));
 }
 
 /// paren_expr ::= '(' expression ')'
@@ -74,7 +74,7 @@ fn parse_identifier_expr(ctx: &mut ParserContext, id_name: String) -> Result<Box
 ///   ::= identifier_expr
 ///   ::= number_expr
 ///   ::= paren_expr
-fn parse_primary(ctx: &mut ParserContext) -> Result<Box<Expr>, ()> {
+fn parse_primary(ctx: &mut ParserContext, unary_check: bool) -> Result<Box<Expr>, ()> {
     match ctx.current_token() {
         Some(token) => {
             match token {
@@ -84,22 +84,28 @@ fn parse_primary(ctx: &mut ParserContext) -> Result<Box<Expr>, ()> {
                 },
                 Token::NumberLiteral(number) => {
                     let number = number.to_owned();
-                    Ok(parse_number_expr(ctx, number, false))
+                    Ok(parse_number_expr(ctx, number))
                 },
                 Token::Minus => {
+                    if !unary_check {
+                        Diagnostic::push_new(Diagnostic::new(
+                            Level::Error,
+                            "Unexpected '-'".to_string(),
+                        ));
+                        return Err(());
+                    }
+
                     ctx.next_token();
-                    match ctx.current_token() {
-                        Some(Token::NumberLiteral(number)) => {
-                            let number = number.to_owned();
-                            Ok(parse_number_expr(ctx, number, true))
-                        },
-                        _ => {
+                    
+                    match parse_primary(ctx, false) {
+                        Ok(expr) => Ok(Box::new(Expr::Unary(expr))),
+                        Err(_) => {
                             Diagnostic::push_new(Diagnostic::new(
                                 Level::Error,
-                                "Expected number after '-'".to_string(),
+                                "Expected number, identifier, or '(' after '-'".to_string(),
                             ));
                             Err(())
-                        }
+                        },
                     }
                 },
                 Token::OpenParen => parse_paren_expr(ctx),
@@ -140,7 +146,7 @@ fn parse_bin_op_rhs(ctx: &mut ParserContext, expr_precedence: i32, mut lhs: Box<
         ctx.next_token(); // eat bin_op
 
         // Parse the primary expression after the binary operator.
-        let mut rhs = parse_primary(ctx)?;
+        let mut rhs = parse_primary(ctx, true)?;
 
         // If BinOp binds less tightly with RHS than the operator after RHS, let
         // the pending operator take RHS as its LHS.
@@ -174,7 +180,7 @@ fn parse_bin_op_rhs(ctx: &mut ParserContext, expr_precedence: i32, mut lhs: Box<
 ///   ::= primary bin_op_rhs
 ///
 fn parse_expression(ctx: &mut ParserContext) -> Result<Box<Expr>, ()> {
-    let lhs = parse_primary(ctx)?;
+    let lhs = parse_primary(ctx, true)?;
     return parse_bin_op_rhs(ctx, 0, lhs);
 }
 
