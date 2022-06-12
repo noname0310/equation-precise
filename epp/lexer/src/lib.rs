@@ -29,7 +29,7 @@ fn next(input: &str) -> (Token, usize) {
     let kind = match cursor.consume().unwrap() {
         char if is_id_start(char) => {
             consume_while(&mut cursor, |char| is_id_continue(char));
-            Token::Id
+            Token::Id(input[..cursor.len_consumed()].to_string())
         }
         '0'..='9' => {
             consume_number(&mut cursor);

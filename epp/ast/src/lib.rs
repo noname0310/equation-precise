@@ -1,4 +1,4 @@
-#[derive(Debug, Clone, Hash)]
+#[derive(Debug, Clone)]
 pub enum Expr {
     Eq(Box<Expr>, Box<Expr>),
     Ne(Box<Expr>, Box<Expr>),
@@ -14,5 +14,5 @@ pub enum Expr {
     Mod(Box<Expr>, Box<Expr>),
     Call(Box<Expr>, Vec<Expr>),
     Id(String),
-    Literal(String),
+    Literal(f64),
 }

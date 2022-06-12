@@ -15,7 +15,7 @@ pub enum Token {
     Slash,        // "/"
     Percent,      // "%"
     Caret,        // "^"
-    Id,           // identifier or keyword
+    Id(String),   // identifier or keyword
     NumberLiteral(String),
 }
 
@@ -37,7 +37,7 @@ impl Token {
             Token::Slash => "/",
             Token::Percent => "%",
             Token::Caret => "^",
-            Token::Id => "id",
+            Token::Id(..) => "id",
             Token::NumberLiteral(..) => "literal",
         }
     }
