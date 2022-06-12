@@ -1,10 +1,11 @@
 use lexer;
 use parser;
+use diagnostic;
 
 fn main() {
     let mut input = String::new();
     std::io::stdin().read_line(&mut input).unwrap();
-    
+
     let token_iter = lexer::token_iter(&input);
 
     let ast = parser::parse_top_level_expression(
@@ -15,4 +16,5 @@ fn main() {
     );
 
     println!("{:?}", ast);
+    println!("{:?}", diagnostic::Diagnostic::diagnostics());
 }
