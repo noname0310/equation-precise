@@ -12,7 +12,8 @@ pub enum Expr {
     Mul(Box<Expr>, Box<Expr>),
     Div(Box<Expr>, Box<Expr>),
     Mod(Box<Expr>, Box<Expr>),
-    Call(Box<Expr>, Vec<Expr>),
+    Pow(Box<Expr>, Box<Expr>),
+    Call(String, Vec<Expr>),
     Id(String),
     Literal(f64),
 }
