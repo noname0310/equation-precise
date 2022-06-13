@@ -43,7 +43,7 @@ fn parse_identifier_expr(ctx: &mut ParserContext, id_name: String) -> Result<Box
             if ctx.current_token().unwrap() != &Token::CloseParen {
                 loop {
                     let arg = parse_expression(ctx)?;
-                    args.push(*arg);
+                    args.push(arg);
                     
                     if let Some(Token::CloseParen) = ctx.current_token() {
                         break;
@@ -158,6 +158,7 @@ fn parse_bin_op_rhs(ctx: &mut ParserContext, expr_precedence: i32, mut lhs: Box<
 
         // Merge LHS/RHS.
         lhs = Box::new(
+            
             match bin_op {
                 Token::Eq => Expr::Eq(lhs, rhs),
                 Token::Lt => Expr::Lt(lhs, rhs),

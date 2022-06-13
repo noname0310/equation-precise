@@ -9,3 +9,4 @@ ast = { path = "ast" }
 lexer = { path = "lexer" }
 parser = { path = "parser" }
 diagnostic = { path = "diagnostic", features = ["global_instance"] }
+evaluator = { path = "evaluator" }
