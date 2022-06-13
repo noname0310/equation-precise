@@ -19,13 +19,14 @@ fn main() {
     );
 
     if let Ok(ast) = ast {
-        let eval_result = evaluator::eval(
-            ast,
+        let eval_result = evaluator::eval_equation(
+            &ast,
             &HashMap::from([
                 ("x".to_string(), 1.0),
                 ("y".to_string(), 2.0),
                 ("z".to_string(), 3.0),
-            ])
+            ]),
+            0.001
         );
 
         println!("{:?}", eval_result);

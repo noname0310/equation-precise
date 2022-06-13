@@ -6,16 +6,132 @@ use ast::Expr;
 
 use validate::validate_equation;
 
-pub fn eval(ast: Box<Expr>, variables: &HashMap<String, f64>) -> Result<f64, ()> {
-    let id_table = make_id_list(&ast);
-    let expr_count = count_expr_count(&ast);
+#[derive(Debug)]
+pub struct EvalResult {
+    lhs: f64,
+    op: &'static str,
+    rhs: f64,
+    eval_result: bool,
+}
+
+impl EvalResult {
+    pub fn lhs(&self) -> f64 {
+        self.lhs
+    }
+
+    pub fn op(&self) -> &'static str {
+        self.op
+    }
+
+    pub fn rhs(&self) -> f64 {
+        self.rhs
+    }
+
+    pub fn eval_result(&self) -> bool {
+        self.eval_result
+    }
+}
+
+pub fn eval_equation(
+    ast: &Box<Expr>,
+    variables: &HashMap<String, f64>,
+    equality_approximate_threshold: f64,
+) -> Result<EvalResult, ()> {
+    let id_table = make_id_list(ast);
+    let expr_count = count_expr_count(ast);
 
     if !validate_equation(variables, expr_count, id_table) {
         return Err(());
     }
-    
-    println!("{:?}", ast);
-    Err(())
+
+    let ast = trasnsform_ast(
+        ast,
+        &mut |expr| {
+            if let Expr::Id(name) = expr.as_ref() {
+                if let Some(value) = variables.get(name) {
+                    return Box::new(Expr::Literal(value.clone()));
+                } else {
+                    unreachable!();
+                }
+            } else {
+                expr
+            }
+        }
+    );
+
+    match ast.as_ref() {
+        Expr::Eq(lhs, rhs) => {
+            let lhs = fold_const_expr(lhs);
+            let rhs = fold_const_expr(rhs);
+            return Ok(
+                EvalResult {
+                    rhs, op: ast.to_str(), lhs,
+                    eval_result: f64::abs(lhs - rhs) < equality_approximate_threshold
+                }
+            );
+        },
+        Expr::Lt(lhs, rhs) => {
+            let lhs = fold_const_expr(lhs);
+            let rhs = fold_const_expr(rhs);
+            return Ok(
+                EvalResult {
+                    rhs, op: ast.to_str(), lhs,
+                    eval_result: lhs < rhs
+                }
+            );
+        },
+        Expr::Gt(lhs, rhs) => {
+            let lhs = fold_const_expr(lhs);
+            let rhs = fold_const_expr(rhs);
+            return Ok(
+                EvalResult {
+                    rhs, op: ast.to_str(), lhs,
+                    eval_result: lhs > rhs
+                }
+            );
+        },
+        Expr::Le(lhs, rhs) => {
+            let lhs = fold_const_expr(lhs);
+            let rhs = fold_const_expr(rhs);
+            return Ok(
+                EvalResult {
+                    rhs, op: ast.to_str(), lhs,
+                    eval_result: lhs <= rhs
+                }
+            );
+        },
+        Expr::Ge(lhs, rhs) => {
+            let lhs = fold_const_expr(lhs);
+            let rhs = fold_const_expr(rhs);
+            return Ok(
+                EvalResult {
+                    rhs, op: ast.to_str(), lhs,
+                    eval_result: lhs >= rhs
+                }
+            );
+        },
+        _ => unreachable!(),
+    }
+}
+
+fn fold_const_expr(ast: &Box<Expr>) -> f64 {
+    match ast.as_ref() {
+        Expr::Literal(value) => value.clone(),
+        Expr::Add(lhs, rhs) => fold_const_expr(lhs) + fold_const_expr(rhs),
+        Expr::Sub(lhs, rhs) => fold_const_expr(lhs) - fold_const_expr(rhs),
+        Expr::Mul(lhs, rhs) => fold_const_expr(lhs) * fold_const_expr(rhs),
+        Expr::Div(lhs, rhs) => fold_const_expr(lhs) / fold_const_expr(rhs),
+        Expr::Mod(lhs, rhs) => fold_const_expr(lhs) % fold_const_expr(rhs),
+        Expr::Pow(lhs, rhs) => fold_const_expr(lhs).powf(fold_const_expr(rhs)),
+        Expr::Unary(expr) => -fold_const_expr(expr),
+        Expr::Id(..)
+        | Expr::Eq(..)
+        | Expr::Lt(..)
+        | Expr::Gt(..)
+        | Expr::Le(..)
+        | Expr::Ge(..) => panic!("constant expression expected"),
+        Expr::Call(..) => unimplemented!(),
+    }
 }
 
 fn traverse_ast(ast: &Box<Expr>, func: &mut impl FnMut(&Box<Expr>)) {
