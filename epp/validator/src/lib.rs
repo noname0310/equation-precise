@@ -3,6 +3,46 @@ use std::collections::{HashMap, HashSet};
 use diagnostic::{Diagnostic, Level};
 use ast::Expr;
 
+#[macro_use]
+extern crate lazy_static;
+
+lazy_static! {
+    static ref FUNCTION_SET: HashSet<&'static str> = {
+        let mut set = HashSet::new();
+        set.insert("abs");
+        set.insert("acos");
+        set.insert("acosh");
+        set.insert("asin");
+        set.insert("asinh");
+        set.insert("atan");
+        set.insert("atan2");
+        set.insert("atanh");
+        set.insert("cbrt");
+        set.insert("ceil");
+        set.insert("cos");
+        set.insert("cosh");
+        set.insert("exp");
+        set.insert("exp_m1");
+        set.insert("floor");
+        set.insert("hypot");
+        set.insert("ln");
+        set.insert("ln_1p");
+        set.insert("log");
+        set.insert("log10");
+        set.insert("log2");
+        set.insert("max");
+        set.insert("min");
+        set.insert("pow");
+        set.insert("round");
+        set.insert("sin");
+        set.insert("sinh");
+        set.insert("sqrt");
+        set.insert("tan");
+        set.insert("tanh");
+        set
+    };
+}
+
 pub fn validate_equation(
     ast: &Box<Expr>,
     variables: &HashMap<String, f64>
@@ -34,6 +74,17 @@ pub fn validate_equation(
             Level::Warning,
             format!("Variable {} is not used", var_name),
         ));
+    }
+
+    let functions = id_table.called_ids;
+    for function in functions {
+        if !FUNCTION_SET.contains(function.as_str()) {
+            Diagnostic::push_new(Diagnostic::new(
+                Level::Error,
+                format!("Function {} is not defined", function),
+            ));
+            return false;
+        }
     }
 
     let mut relation_expr_count = 0;
