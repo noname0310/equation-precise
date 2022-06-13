@@ -40,4 +40,9 @@ impl Diagnostic {
     pub fn diagnostics() -> MutexGuard<'static, Vec<Diagnostic>> {
         DIAGNOSTICS.lock()
     }
+
+    #[cfg(feature = "global_instance")]
+    pub fn clear() {
+        DIAGNOSTICS.lock().clear();
+    }
 }

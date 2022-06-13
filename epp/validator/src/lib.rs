@@ -7,39 +7,40 @@ use ast::Expr;
 extern crate lazy_static;
 
 lazy_static! {
-    static ref FUNCTION_SET: HashSet<&'static str> = {
-        let mut set = HashSet::new();
-        set.insert("abs");
-        set.insert("acos");
-        set.insert("acosh");
-        set.insert("asin");
-        set.insert("asinh");
-        set.insert("atan");
-        set.insert("atan2");
-        set.insert("atanh");
-        set.insert("cbrt");
-        set.insert("ceil");
-        set.insert("cos");
-        set.insert("cosh");
-        set.insert("exp");
-        set.insert("exp_m1");
-        set.insert("floor");
-        set.insert("hypot");
-        set.insert("ln");
-        set.insert("ln_1p");
-        set.insert("log");
-        set.insert("log10");
-        set.insert("log2");
-        set.insert("max");
-        set.insert("min");
-        set.insert("pow");
-        set.insert("round");
-        set.insert("sin");
-        set.insert("sinh");
-        set.insert("sqrt");
-        set.insert("tan");
-        set.insert("tanh");
-        set
+    static ref FUNCTION_MAP: HashMap<&'static str, usize> = {
+        let mut map = HashMap::new();
+        //function_name, parameter_count
+        map.insert("abs", 1);
+        map.insert("acos", 1);
+        map.insert("acosh", 1);
+        map.insert("asin", 1);
+        map.insert("asinh", 1);
+        map.insert("atan", 1);
+        map.insert("atan2", 2);
+        map.insert("atanh", 1);
+        map.insert("cbrt", 1);
+        map.insert("ceil", 1);
+        map.insert("cos", 1);
+        map.insert("cosh", 1);
+        map.insert("exp", 1);
+        map.insert("exp_m1", 1);
+        map.insert("floor", 1);
+        map.insert("hypot", 2);
+        map.insert("ln", 1);
+        map.insert("ln_1p", 1);
+        map.insert("log", 2);
+        map.insert("log10", 1);
+        map.insert("log2", 1);
+        map.insert("max", 2);
+        map.insert("min", 2);
+        map.insert("pow", 2);
+        map.insert("round", 1);
+        map.insert("sin", 1);
+        map.insert("sinh", 1);
+        map.insert("sqrt", 1);
+        map.insert("tan", 1);
+        map.insert("tanh", 1);
+        map
     };
 }
 
@@ -78,13 +79,36 @@ pub fn validate_equation(
 
     let functions = id_table.called_ids;
     for function in functions {
-        if !FUNCTION_SET.contains(function.as_str()) {
+        if !FUNCTION_MAP.contains_key(function.as_str()) {
             Diagnostic::push_new(Diagnostic::new(
                 Level::Error,
                 format!("Function {} is not defined", function),
             ));
             return false;
         }
+    }
+
+    let mut function_call_argument_error = false;
+    
+    traverse_ast(
+        ast,
+        &mut |expr| {
+            if let Expr::Call(name, args) = expr.as_ref() {
+                if let Some(param_count) = FUNCTION_MAP.get(name.as_str()) {
+                    if args.len() != param_count.to_owned() {
+                        Diagnostic::push_new(Diagnostic::new(
+                            Level::Error,
+                            format!("Function '{}' takes {} arguments", name, param_count),
+                        ));
+                        function_call_argument_error = true;
+                    }
+                }
+            }
+        },
+    );
+
+    if function_call_argument_error {
+        return false;
     }
 
     let mut relation_expr_count = 0;
