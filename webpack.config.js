@@ -1,6 +1,7 @@
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const ESLintPlugin = require("eslint-webpack-plugin");
+const WasmPackPlugin = require("@wasm-tool/wasm-pack-plugin");
 //const BundleAnalyzerPlugin = require("webpack-bundle-analyzer").BundleAnalyzerPlugin;
 
 module.exports = {
@@ -54,6 +55,11 @@ module.exports = {
         new ESLintPlugin({
             extensions: "ts",
         }),
+        new WasmPackPlugin({
+            crateDirectory: path.resolve(__dirname, "./epp"),
+            extraArgs: "--target browser",
+            outDir: path.resolve(__dirname, "./src/epp"),
+        }),
         //new BundleAnalyzerPlugin(),
     ],
     devServer: {
@@ -67,4 +73,7 @@ module.exports = {
         },
     },
     mode: "development",
+    experiments: {
+        asyncWebAssembly: true
+    }
 };

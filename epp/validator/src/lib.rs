@@ -46,25 +46,23 @@ lazy_static! {
 
 pub fn validate_equation(
     ast: &Box<Expr>,
-    variables: &HashMap<String, f64>
+    constants: &HashMap<String, f64>,
+    variables: &HashMap<String, f64>,
+    un_evaluated_variables: &HashSet<String>
 ) -> bool {
     let id_table = make_id_list(ast);
     let expr_count_map = count_expr_count(ast);
 
-    let mut var_set = HashSet::new();
-    for (var, _) in variables {
-        var_set.insert(var);
-    }
-
-    let mut ids = id_table.ids;
-    for (name, _) in variables {
-        if ids.contains(name) {
-            ids.remove(name);
-            var_set.remove(name);
-        } else {
+    let mut var_set = variables.keys().chain(un_evaluated_variables.iter()).cloned().collect::<HashSet<_>>();
+    
+    let ids = id_table.ids;
+    for name in ids {
+        if var_set.contains(&name) {
+            var_set.remove(&name);
+        } else if !constants.contains_key(&name) {
             Diagnostic::push_new(Diagnostic::new(
                 Level::Error,
-                format!("Variable {} is not defined", name),
+                format!("Variable or Constant {} is not defined", name),
             ));
             return false;
         }

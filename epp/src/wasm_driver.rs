@@ -1,10 +1,11 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use lexer;
 use parser;
 use diagnostic;
 use transpiler;
 use wasm_bindgen::prelude::*;
+use std::f64;
 
 #[wasm_bindgen]
 pub fn emit(
@@ -28,10 +29,18 @@ pub fn emit(
         if !validator::validate_equation(
             &ast, 
             &HashMap::from([
-            ("x".to_string(), 1.0),
-            ("y".to_string(), 2.0),
-            ("z".to_string(), 3.0),
-        ])) {
+                ("e".to_string(), f64::consts::E),
+                ("pi".to_string(), f64::consts::PI),
+                ("ln2".to_string(), f64::consts::LN_2),
+                ("ln10".to_string(), f64::consts::LN_10),
+                ("sqrt2".to_string(), f64::consts::SQRT_2),
+            ]),
+            &HashMap::new(),
+            &HashSet::from([
+                "x".to_string(),
+                "y".to_string()
+            ])
+        ) {
             result.push_str("Invalid equation");
         } else {
             result.push_str(transpiler::transplie_to_js(&ast, equality_approximate_threshold).as_str());

@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use lexer;
 use parser;
@@ -6,6 +6,7 @@ use diagnostic;
 use evaluator;
 use transpiler;
 use validator;
+use std::f64;
 
 fn main() {
     let mut input = String::new();
@@ -27,10 +28,21 @@ fn main() {
             ("z".to_string(), 3.0),
         ]);
 
-        if validator::validate_equation(&ast, &variables) {
+        let constants = HashMap::from([
+            ("e".to_string(), f64::consts::E),
+            ("pi".to_string(), f64::consts::PI),
+            ("ln2".to_string(), f64::consts::LN_2),
+            ("ln10".to_string(), f64::consts::LN_10),
+            ("sqrt2".to_string(), f64::consts::SQRT_2),
+        ]);
+
+        if validator::validate_equation(
+            &ast, &constants, &variables,
+            &HashSet::new()
+        ) {
             let eval_result = evaluator::eval_equation(
                 &ast,
-                &variables,
+                &variables.into_iter().chain(constants.into_iter()).collect(),
                 0.001
             );
 
