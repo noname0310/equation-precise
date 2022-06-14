@@ -164,7 +164,7 @@ fn transplie_to_js_internal(
         Expr::Pow(lhs, rhs) => {
             result.push('(');
             transplie_to_js_internal(lhs, equality_approximate_threshold, result);
-            result.push_str(" ^ ");
+            result.push_str(" ** ");
             transplie_to_js_internal(rhs, equality_approximate_threshold, result);
             result.push(')');
         },

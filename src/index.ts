@@ -7,5 +7,5 @@ game.inputHandler.startHandleEvents();
 
 const epp = import("./epp");
 epp.then(epp => {
-    epp.emit("x + y = z", 0.001);
+    (globalThis as any).epp = (expr: string): ((x: number, y: number) => boolean) => ["x", "y", "return " + epp.emit(expr, 0.001)] as any;
 });
