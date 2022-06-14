@@ -8,8 +8,9 @@ pub use level::*;
 use crate::global_instance::DIAGNOSTICS;
 #[cfg(feature = "global_instance")]
 use std::sync::MutexGuard;
+use serde::Serialize;
 
-#[derive(Debug, Clone, Hash)]
+#[derive(Debug, Clone, Hash, Serialize)]
 pub struct Diagnostic {
     level: Level,
     message: String,

@@ -36,7 +36,7 @@ fn main() {
             ("sqrt2".to_string(), f64::consts::SQRT_2),
         ]);
 
-        if validator::validate_equation(
+        if validator::validate_bool_equation(
             &ast, &constants, &variables,
             &HashSet::new()
         ) {

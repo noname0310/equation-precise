@@ -44,11 +44,12 @@ lazy_static! {
     };
 }
 
-pub fn validate_equation(
+fn validate_equation(
     ast: &Box<Expr>,
     constants: &HashMap<String, f64>,
     variables: &HashMap<String, f64>,
-    un_evaluated_variables: &HashSet<String>
+    un_evaluated_variables: &HashSet<String>,
+    relational_operation_count: usize,
 ) -> bool {
     let id_table = make_id_list(ast);
     let expr_count_map = count_expr_count(ast);
@@ -122,7 +123,7 @@ pub fn validate_equation(
         }
     }
 
-    if 1 != relation_expr_count {
+    if relational_operation_count != relation_expr_count as usize {
         Diagnostic::push_new(Diagnostic::new(
             Level::Error,
             format!("relation expression must be used once"),
@@ -133,6 +134,35 @@ pub fn validate_equation(
     true
 }
 
+pub fn validate_number_equation(
+    ast: &Box<Expr>,
+    constants: &HashMap<String, f64>,
+    variables: &HashMap<String, f64>,
+    un_evaluated_variables: &HashSet<String>
+) -> bool {
+    validate_equation(
+        ast,
+        constants,
+        variables,
+        un_evaluated_variables,
+        0,
+    )
+}
+
+pub fn validate_bool_equation(
+    ast: &Box<Expr>,
+    constants: &HashMap<String, f64>,
+    variables: &HashMap<String, f64>,
+    un_evaluated_variables: &HashSet<String>
+) -> bool {
+    validate_equation(
+        ast,
+        constants,
+        variables,
+        un_evaluated_variables,
+        1,
+    )
+}
 
 #[derive(Debug, Clone)]
 struct IdTable {
