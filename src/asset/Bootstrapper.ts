@@ -52,7 +52,7 @@ export class Bootstrapper extends BaseBootstrapper {
                     const axisRenderer = c.gameObject.getComponent(AxisRenderer)!;
                     c.onZoom = (viewSize: number): void => {
                         gridRenderer.viewScale = viewSize;
-                        axisRenderer.lineWidth = viewSize * 5;
+                        axisRenderer.lineWidth = viewSize * 2;
                     };
                     c.cameraController = cameraController.ref!;
                 })

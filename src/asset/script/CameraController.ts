@@ -68,7 +68,7 @@ export class CameraController extends Component {
     }
 
     private readonly onKeyDown = (event: KeyboardEvent): void => {
-        if (event.key === " ") {
+        if (event.key === "Escape") {
             this._currentViewSize = this._defaultViewSize;
             this.resize();
             this.transform.localPosition.copy(this._defaultPosition);

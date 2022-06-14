@@ -94,10 +94,10 @@ export class GridRenderer extends Component {
                 .withComponent(CssHtmlElementRenderer, c => {
                     const element = document.createElement("div");
                     element.style.backgroundImage = "\
-                        repeating-linear-gradient(#555 0 1px, transparent 1px 100%),\
-                        repeating-linear-gradient(#999 0 1px, transparent 1px 50%),\
-                        repeating-linear-gradient(90deg, #555 0 1px, transparent 1px 100%), \
-                        repeating-linear-gradient(90deg, #999 0 1px, transparent 1px 50%)";
+                        repeating-linear-gradient(#ddd 0 1px, transparent 1px 100%),\
+                        repeating-linear-gradient(#eee 0 1px, transparent 1px 50%),\
+                        repeating-linear-gradient(90deg, #ddd 0 1px, transparent 1px 100%), \
+                        repeating-linear-gradient(90deg, #eee 0 1px, transparent 1px 50%)";
                     element.style.backgroundSize =
                         this._gridCellScalar / this._viewScale + "px " +
                         this._gridCellScalar / this._viewScale + "px";

@@ -67,7 +67,7 @@ export class AxisRenderer extends Component {
                     .withComponent(Css2DLineRenderer, c => {
                         this._xAxis = c;
                         c.lineWidth = this._lineWidth;
-                        c.lineColor = new Color(0.1, 0.1, 0.1);
+                        c.lineColor = new Color(0.5, 0.5, 0.5);
                     })
                     .getGameObject(xAxisObject))
 
@@ -75,7 +75,7 @@ export class AxisRenderer extends Component {
                     .withComponent(Css2DLineRenderer, c => {
                         this._yAxis = c;
                         c.lineWidth = this._lineWidth;
-                        c.lineColor = new Color(0.1, 0.1, 0.1);
+                        c.lineColor = new Color(0.5, 0.5, 0.5);
                     })
                     .getGameObject(yAxisObject))
         );
