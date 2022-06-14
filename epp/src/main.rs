@@ -21,6 +21,8 @@ fn main() {
         )
     );
 
+    println!("{:?}", ast);
+
     if let Ok(ast) = ast {
         let variables = HashMap::from([
             ("x".to_string(), 1.0),
@@ -48,7 +50,11 @@ fn main() {
 
             println!("{:?}", eval_result);
 
-            println!("{}", transpiler::transplie_to_js(&ast, 0.001));
+            println!("{}", transpiler::transplie_to_js(
+                &ast,
+                &HashMap::new(),
+                0.001
+            ));
         }
     }
 

@@ -15,12 +15,12 @@ export class ParserBind {
         ParserBind._epp = await import("../../epp");
     }
 
-    public static emitBoolExpr(expr: string): ParseResult<(x: number, y: number) => boolean> {
+    public static emitBoolExpr(expr: string): TranspileResult<(x: number, y: number) => boolean> {
         if (!this._epp) throw new Error("ParserBind is not initialized");
         return this.parseResult<(x: number, y: number) => boolean>(this._epp.emit_bool_expr(expr, 0.00001), ["x", "y"]);
     }
 
-    public static emitNumberExpr(expr: string): ParseResult<(x: number) => number> {
+    public static emitNumberExpr(expr: string): TranspileResult<(x: number) => number> {
         if (!this._epp) throw new Error("ParserBind is not initialized");
         return this.parseResult<(x: number) => number>(this._epp.emit_number_expr(expr), ["x"]);
     }
@@ -28,7 +28,7 @@ export class ParserBind {
     private static parseResult<T extends (...args: number[]) => number|boolean>(
         json: string,
         params: GetParametersLengthStringArray<T>
-    ): ParseResult<T> {
+    ): TranspileResult<T> {
         const obj = JSON.parse(json);
 
         const func = obj.code === "Invalid equation"
@@ -37,15 +37,15 @@ export class ParserBind {
 
         const error = obj.diagnostics.map((d: any) => {
             return [
-                d.level === "error" ? ErrorLevel.Error : ErrorLevel.Warning,
+                d.level === "Error" ? ErrorLevel.Error : ErrorLevel.Warning,
                 d.message
             ];
         });
-        return new ParseResult<T>(func, error);
+        return new TranspileResult<T>(func, error);
     }
 }
 
-export class ParseResult<T extends (...args: number[]) => number|boolean> {
+export class TranspileResult<T extends (...args: number[]) => number|boolean> {
     public readonly func: T|null;
     public readonly error: [ErrorLevel, string][];
 

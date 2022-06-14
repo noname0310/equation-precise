@@ -17,6 +17,14 @@ lazy_static! {
         ("ln10".to_string(), f64::consts::LN_10),
         ("sqrt2".to_string(), f64::consts::SQRT_2),
     ]);
+
+    pub static ref CONSTANTS_NAMES: HashMap<String, String> = HashMap::from([
+        ("e".to_string(), "Math.E".to_string()),
+        ("pi".to_string(), "Math.PI".to_string()),
+        ("ln2".to_string(), "Math.LN2".to_string()),
+        ("ln10".to_string(), "Math.LN10".to_string()),
+        ("sqrt2".to_string(), "Math.SQRT2".to_string()),
+    ]);
 }
 
 #[wasm_bindgen]
@@ -49,8 +57,14 @@ pub fn emit_bool_expr(
         ) {
             result.push_str("Invalid expression");
         } else {
-            result.push_str(transpiler::transplie_to_js(&ast, equality_approximate_threshold).as_str());
+            result.push_str(transpiler::transplie_to_js(
+                &ast,
+                &CONSTANTS_NAMES,
+                equality_approximate_threshold
+            ).as_str());
         }
+    } else {
+        result.push_str("Invalid equation");
     }
 
     let serialized = serde_json::to_string(
@@ -91,8 +105,14 @@ pub fn emit_number_expr(
         ) {
             result.push_str("Invalid equation");
         } else {
-            result.push_str(transpiler::transplie_to_js(&ast, 0.0).as_str());
+            result.push_str(transpiler::transplie_to_js(
+                &ast,
+                &CONSTANTS_NAMES,
+                0.0
+            ).as_str());
         }
+    } else {
+        result.push_str("Invalid equation");
     }
 
     let serialized = serde_json::to_string(

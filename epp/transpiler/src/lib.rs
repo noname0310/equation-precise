@@ -45,33 +45,49 @@ lazy_static! {
 
 pub fn transplie_to_js(
     ast: &Box<Expr>,
+    constant_name_map: &HashMap<String, String>,
     equality_approximate_threshold: f64,
 ) -> String {
     let mut result = String::new();
 
-    transplie_to_js_internal(ast, equality_approximate_threshold, &mut result);
+    transplie_to_js_internal(ast, constant_name_map, equality_approximate_threshold, &mut result);
     result
 }
 
 fn transplie_to_js_internal(
     ast: &Box<Expr>,
+    constant_name_map: &HashMap<String, String>,
     equality_approximate_threshold: f64,
     result: &mut String, 
 ) {
     match ast.as_ref() {
         Expr::Id(id) => {
-            result.push_str(id);
+            if let Some(constant_name) = constant_name_map.get(id) {
+                result.push_str(constant_name);
+            } else {
+                result.push_str(id);
+            }
         },
         Expr::Call(id, args) => {
             if id == "log" {
                 result.push('(');
 
                 result.push_str("Math.log2(");
-                transplie_to_js_internal(&args[0], equality_approximate_threshold, result);
+                transplie_to_js_internal(
+                    &args[0],
+                    constant_name_map,
+                    equality_approximate_threshold,
+                    result
+                );
                 result.push(')');
                 result.push_str(" / ");
                 result.push_str("Math.log2(");
-                transplie_to_js_internal(&args[1], equality_approximate_threshold, result);
+                transplie_to_js_internal(
+                    &args[1],
+                    constant_name_map,
+                    equality_approximate_threshold,
+                    result
+                );
                 result.push(')');
 
                 result.push(')');
@@ -79,7 +95,12 @@ fn transplie_to_js_internal(
                 result.push_str(JS_FUNCTION_MAP.get(id.as_str()).expect("function translation not found"));
                 result.push('(');
                 for arg in args {
-                    transplie_to_js_internal(arg, equality_approximate_threshold, result);
+                    transplie_to_js_internal(
+                        arg,
+                        constant_name_map,
+                        equality_approximate_threshold,
+                        result
+                    );
                     result.push_str(", ");
                 }
                 result.pop();
@@ -90,9 +111,19 @@ fn transplie_to_js_internal(
         Expr::Eq(lhs, rhs) => {
             result.push('(');
             result.push_str("Math.abs(");
-            transplie_to_js_internal(lhs, equality_approximate_threshold, result);
+            transplie_to_js_internal(
+                lhs,
+                constant_name_map,
+                equality_approximate_threshold,
+                result
+            );
             result.push_str(" - ");
-            transplie_to_js_internal(rhs, equality_approximate_threshold, result);
+            transplie_to_js_internal(
+                rhs,
+                constant_name_map,
+                equality_approximate_threshold,
+                result
+            );
             result.push(')');
             result.push_str(" < ");
             result.push_str(&equality_approximate_threshold.to_string());
@@ -100,78 +131,183 @@ fn transplie_to_js_internal(
         },
         Expr::Lt(lhs, rhs) => {
             result.push('(');
-            transplie_to_js_internal(lhs, equality_approximate_threshold, result);
+            transplie_to_js_internal(
+                lhs,
+                constant_name_map,
+                equality_approximate_threshold,
+                result
+            );
             result.push_str(" < ");
-            transplie_to_js_internal(rhs, equality_approximate_threshold, result);
+            transplie_to_js_internal(
+                rhs,
+                constant_name_map,
+                equality_approximate_threshold,
+                result
+            );
             result.push(')');
         },
         Expr::Gt(lhs, rhs) => {
             result.push('(');
-            transplie_to_js_internal(lhs, equality_approximate_threshold, result);
+            transplie_to_js_internal(
+                lhs,
+                constant_name_map,
+                equality_approximate_threshold,
+                result
+            );
             result.push_str(" > ");
-            transplie_to_js_internal(rhs, equality_approximate_threshold, result);
+            transplie_to_js_internal(
+                rhs,
+                constant_name_map,
+                equality_approximate_threshold,
+                result
+            );
             result.push(')');
         },
         Expr::Le(lhs, rhs) => {
             result.push('(');
-            transplie_to_js_internal(lhs, equality_approximate_threshold, result);
+            transplie_to_js_internal(
+                lhs,
+                constant_name_map,
+                equality_approximate_threshold,
+                result
+            );
             result.push_str(" <= ");
-            transplie_to_js_internal(rhs, equality_approximate_threshold, result);
+            transplie_to_js_internal(
+                rhs,
+                constant_name_map,
+                equality_approximate_threshold,
+                result
+            );
             result.push(')');
         },
         Expr::Ge(lhs, rhs) => {
             result.push('(');
-            transplie_to_js_internal(lhs, equality_approximate_threshold, result);
+            transplie_to_js_internal(
+                lhs,
+                constant_name_map,
+                equality_approximate_threshold,
+                result
+            );
             result.push_str(" >= ");
-            transplie_to_js_internal(rhs, equality_approximate_threshold, result);
+            transplie_to_js_internal(
+                rhs,
+                constant_name_map,
+                equality_approximate_threshold,
+                result
+            );
             result.push(')');
         },
         Expr::Add(lhs, rhs) => {
             result.push('(');
-            transplie_to_js_internal(lhs, equality_approximate_threshold, result);
+            transplie_to_js_internal(
+                lhs,
+                constant_name_map,
+                equality_approximate_threshold,
+                result
+            );
             result.push_str(" + ");
-            transplie_to_js_internal(rhs, equality_approximate_threshold, result);
+            transplie_to_js_internal(
+                rhs,
+                constant_name_map,
+                equality_approximate_threshold,
+                result
+            );
             result.push(')');
         },
         Expr::Sub(lhs, rhs) => {
             result.push('(');
-            transplie_to_js_internal(lhs, equality_approximate_threshold, result);
+            transplie_to_js_internal(
+                lhs,
+                constant_name_map,
+                equality_approximate_threshold,
+                result
+            );
             result.push_str(" - ");
-            transplie_to_js_internal(rhs, equality_approximate_threshold, result);
+            transplie_to_js_internal(
+                rhs,
+                constant_name_map,
+                equality_approximate_threshold,
+                result
+            );
             result.push(')');
         },
         Expr::Mul(lhs, rhs) => {
             result.push('(');
-            transplie_to_js_internal(lhs, equality_approximate_threshold, result);
+            transplie_to_js_internal(
+                lhs,
+                constant_name_map,
+                equality_approximate_threshold,
+                result
+            );
             result.push_str(" * ");
-            transplie_to_js_internal(rhs, equality_approximate_threshold, result);
+            transplie_to_js_internal(
+                rhs,
+                constant_name_map,
+                equality_approximate_threshold,
+                result
+            );
             result.push(')');
         },
         Expr::Div(lhs, rhs) => {
             result.push('(');
-            transplie_to_js_internal(lhs, equality_approximate_threshold, result);
+            transplie_to_js_internal(
+                lhs,
+                constant_name_map,
+                equality_approximate_threshold,
+                result
+            );
             result.push_str(" / ");
-            transplie_to_js_internal(rhs, equality_approximate_threshold, result);
+            transplie_to_js_internal(
+                rhs,
+                constant_name_map,
+                equality_approximate_threshold,
+                result
+            );
             result.push(')');
         },
         Expr::Mod(lhs, rhs) => {
             result.push('(');
-            transplie_to_js_internal(lhs, equality_approximate_threshold, result);
+            transplie_to_js_internal(
+                lhs,
+                constant_name_map,
+                equality_approximate_threshold,
+                result
+            );
             result.push_str(" % ");
-            transplie_to_js_internal(rhs, equality_approximate_threshold, result);
+            transplie_to_js_internal(
+                rhs,
+                constant_name_map,
+                equality_approximate_threshold,
+                result
+            );
             result.push(')');
         },
         Expr::Pow(lhs, rhs) => {
             result.push('(');
-            transplie_to_js_internal(lhs, equality_approximate_threshold, result);
+            transplie_to_js_internal(
+                lhs,
+                constant_name_map,
+                equality_approximate_threshold,
+                result
+            );
             result.push_str(" ** ");
-            transplie_to_js_internal(rhs, equality_approximate_threshold, result);
+            transplie_to_js_internal(
+                rhs,
+                constant_name_map,
+                equality_approximate_threshold,
+                result
+            );
             result.push(')');
         },
         Expr::Unary(expr) => {
             result.push('(');
             result.push('-');
-            transplie_to_js_internal(expr, equality_approximate_threshold, result);
+            transplie_to_js_internal(
+                expr,
+                constant_name_map,
+                equality_approximate_threshold,
+                result
+            );
             result.push(')');
         },
         Expr::Literal(literal) => {

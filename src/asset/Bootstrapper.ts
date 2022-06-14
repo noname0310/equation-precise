@@ -11,14 +11,23 @@ import { GraphRenderer } from "./script/GraphRenderer";
 import { GridRenderer } from "./script/GridRenderer";
 import { AxisRenderer } from "./script/AxisRenderer";
 import { GridUnitRenderer } from "./script/GridUnitRenderer";
+import { UiController } from "./script/UiController";
 
 export class Bootstrapper extends BaseBootstrapper {
     public run(): SceneBuilder {
         const instantiater = this.instantiater;
 
         const cameraController = new PrefabRef<CameraController>();
+        const graphRenderer = new PrefabRef<GraphRenderer>();
 
         return this.sceneBuilder
+            .withChild(instantiater.buildGameObject("ui-controller")
+                .withComponent(UiController, c => {
+                    c.equationInputField = document.getElementById("input_equation") as HTMLInputElement;
+                    c.errorMessageDiv = document.getElementById("error_message") as HTMLDivElement;
+                    c.graphRenderer = graphRenderer.ref!;
+                }))
+
             .withChild(instantiater.buildGameObject("graph-renderer")
                 .withComponent(GraphRenderer)
                 .withComponent(CameraRelativeScaleController, c => {
@@ -28,7 +37,8 @@ export class Bootstrapper extends BaseBootstrapper {
                         renderer.viewScale = viewSize;
                     };
                     c.cameraController = cameraController.ref!;
-                }))
+                })
+                .getComponent(GraphRenderer, graphRenderer))
 
             .withChild(instantiater.buildGameObject("camera", new Vector3(0, 0, -1))
                 .withComponent(Camera, c => c.viewSize = 4)

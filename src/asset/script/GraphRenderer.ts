@@ -10,8 +10,22 @@ import Queue from "js-sdsl/dist/esm/Queue/Queue";
 import { GraphMath } from "./GraphMath";
 
 export class GraphRenderer extends Component {
+    public get equation(): (x: number) => number {
+        return this._equation;
+    }
+
+    public set equation(value: (x: number) => number) {
+        this._equation = value;
+
+        const camera = this.engine.cameraContainer.camera;
+        if (!camera) return;
+
+        this.clearChunks();
+        this.startCoroutine(this.renderChunk(camera));
+    }
+
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    private readonly _graph = (x: number): number => Math.sin(Math.cos(x) * Math.log(x)) * 2 ** Math.log(x);
+    private _equation = (_x: number): number => NaN;
 
     private _viewScale = 0.01;
 
@@ -139,7 +153,7 @@ export class GraphRenderer extends Component {
             const chunkSizeHalf = this._chunkSize * 0.5;
             this.drawGraph(
                 (chunkObject.element! as HTMLCanvasElement).getContext("2d")!,
-                this._graph,
+                this._equation,
                 chunkPosition.x - chunkSizeHalf, chunkPosition.x + chunkSizeHalf,
                 chunkPosition.x, chunkPosition.y,
                 this._viewScale / this._chunkSize

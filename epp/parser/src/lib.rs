@@ -40,7 +40,8 @@ fn parse_identifier_expr(ctx: &mut ParserContext, id_name: String) -> Result<Box
             // Call.
             ctx.next_token(); // eat (
             let mut args = Vec::new();
-            if ctx.current_token().unwrap() != &Token::CloseParen {
+            
+            if ctx.current_token().is_none() || ctx.current_token().unwrap() != &Token::CloseParen {
                 loop {
                     let arg = parse_expression(ctx)?;
                     args.push(arg);
@@ -134,7 +135,7 @@ fn parse_bin_op_rhs(ctx: &mut ParserContext, expr_precedence: i32, mut lhs: Box<
     // If this is a bin_op, find its precedence.
     loop {
 	    let tok_precedence = ctx.current_token().map_or(-1, |tok| ctx.get_token_precedence(tok));
-
+        
         // If this is a bin_op that binds at least as tightly as the current bin_op,
         // consume it, otherwise we are done.
         if tok_precedence < expr_precedence {
@@ -189,7 +190,7 @@ pub fn parse_top_level_expression(mut ctx: ParserContext) -> Result<Box<Expr>, (
     ctx.next_token();
     let result = parse_expression(&mut ctx);
 
-    if ctx.next_token().is_some() {
+    if ctx.current_token().is_some() {
         Diagnostic::push_new(Diagnostic::new(
             Level::Error,
             "unexpected token after top-level expression".to_string(),
