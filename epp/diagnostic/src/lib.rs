@@ -7,7 +7,7 @@ pub use level::*;
 #[cfg(feature = "global_instance")]
 use crate::global_instance::DIAGNOSTICS;
 #[cfg(feature = "global_instance")]
-use std::sync::MutexGuard;
+use parking_lot::MutexGuard;
 use serde::Serialize;
 
 #[derive(Debug, Clone, Hash, Serialize)]
@@ -34,16 +34,16 @@ impl Diagnostic {
 
     #[cfg(feature = "global_instance")]
     pub fn push_new(diagnostic: Diagnostic) {
-        DIAGNOSTICS.lock().unwrap().push(diagnostic);
+        DIAGNOSTICS.lock().push(diagnostic);
     }
 
     #[cfg(feature = "global_instance")]
     pub fn diagnostics() -> MutexGuard<'static, Vec<Diagnostic>> {
-        DIAGNOSTICS.lock().unwrap()
+        DIAGNOSTICS.lock()
     }
 
     #[cfg(feature = "global_instance")]
     pub fn clear() {
-        DIAGNOSTICS.lock().unwrap().clear();
+        DIAGNOSTICS.lock().clear();
     }
 }
