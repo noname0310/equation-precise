@@ -151,12 +151,16 @@ export class GraphRenderer extends Component {
             
             const chunkPosition = chunkObject.transform.position;
             const chunkSizeHalf = this._chunkSize * 0.5;
-            this.drawGraph(
+            this.xSamplingDrawGraph(
                 (chunkObject.element! as HTMLCanvasElement).getContext("2d")!,
                 this._equation,
                 chunkPosition.x - chunkSizeHalf, chunkPosition.x + chunkSizeHalf,
                 chunkPosition.x, chunkPosition.y,
                 this._viewScale / this._chunkSize
+            );
+
+            this.shaderDrawGraph(
+                (chunkObject.element! as HTMLCanvasElement).getContext("webgl2")!
             );
         }
     }
@@ -170,7 +174,7 @@ export class GraphRenderer extends Component {
 
     private readonly _sampleCount = 32 * 10;
 
-    private drawGraph(
+    private xSamplingDrawGraph(
         ctx: CanvasRenderingContext2D,
         func: (x: number) => number,
         left: number, right: number,
@@ -201,6 +205,103 @@ export class GraphRenderer extends Component {
         ctx.lineWidth = strokeWidth;
         ctx.stroke();
         ctx.closePath();
+    }
+
+    private _program: WebGLProgram|null = null;
+    private getProgram(gl: WebGL2RenderingContext): WebGLProgram {
+        if (!this._program) {
+            const program = gl.createProgram()!;
+            const vertexShader = gl.createShader(gl.VERTEX_SHADER)!;
+            gl.shaderSource(vertexShader, `
+                precision mediump float;
+                attribute vec2 position;
+                varying vec2 uv;
+                void main() {
+                    uv = position;
+                    gl_Position = vec4(position, 0, 1);
+                }
+            `);
+            gl.compileShader(vertexShader);
+
+            const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)!;
+            gl.shaderSource(fragmentShader, `
+                precision mediump float;
+                varying vec2 uv;
+                uniform sampler2D texture;
+                void main() {
+                    gl_FragColor = texture2D(texture, uv);
+                }
+            `);
+            gl.compileShader(fragmentShader);
+
+            gl.attachShader(program, vertexShader);
+            gl.deleteShader(vertexShader);
+            gl.attachShader(program, fragmentShader);
+            gl.deleteShader(fragmentShader);
+            gl.linkProgram(program);
+
+            const log = gl.getProgramInfoLog(program);
+            if (log) console.error(log);
+
+            this._program = program;
+        }
+        return this._program!;
+    }
+
+    private shaderDrawGraph(gl: WebGL2RenderingContext): void {
+        const program = this.getProgram(gl);
+        gl.useProgram(program);
+        
+        const positionLocation = gl.getAttribLocation(program, "position");
+        const uvLocation = gl.getAttribLocation(program, "uv");
+        const textureLocation = gl.getUniformLocation(program, "texture");
+
+        const positionBuffer = gl.createBuffer()!;
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+            -1, -1,
+            1, -1,
+            -1, 1,
+            -1, 1,
+            1, -1,
+            1, 1
+        ]), gl.STATIC_DRAW);
+        gl.enableVertexAttribArray(positionLocation);
+        gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+
+        const uvBuffer = gl.createBuffer()!;
+        gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+            0, 0,
+            1, 0,
+            0, 1,
+            0, 1,
+            1, 0,
+            1, 1
+        ]), gl.STATIC_DRAW);
+        gl.enableVertexAttribArray(uvLocation);
+        gl.vertexAttribPointer(uvLocation, 2, gl.FLOAT, false, 0, 0);
+        
+        const texture = gl.createTexture()!;
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        
+        const textureData = new Uint8Array(this._chunkResolution * this._chunkResolution * 4);
+        for (let i = 0; i < this._chunkResolution * this._chunkResolution; i++) {
+            textureData[i * 4 + 0] = 255;
+            textureData[i * 4 + 1] = 255;
+            textureData[i * 4 + 2] = 255;
+            textureData[i * 4 + 3] = 255;
+        }
+
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this._chunkResolution, this._chunkResolution, 0, gl.RGBA, gl.UNSIGNED_BYTE, textureData);
+
+        gl.uniform1i(textureLocation, 0);
+
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
     }
 
     private readonly _lastCameraPosition = new Vector2(NaN, NaN);
