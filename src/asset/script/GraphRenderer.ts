@@ -159,9 +159,12 @@ export class GraphRenderer extends Component {
                 this._viewScale / this._chunkSize
             );
 
-            this.shaderDrawGraph(
-                (chunkObject.element! as HTMLCanvasElement).getContext("webgl2")!
-            );
+            // eslint-disable-next-line no-constant-condition
+            if (false) {
+                this.shaderDrawGraph(
+                    (chunkObject.element! as HTMLCanvasElement).getContext("webgl2")!
+                );
+            }
         }
     }
 

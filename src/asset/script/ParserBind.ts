@@ -1,15 +1,12 @@
+import { EmitResult } from "../../epp";
+
 type GetParametersLengthStringArray<T extends (...args: number[]) => any> =
     T extends (...args: infer U) => any
         ? {[K in keyof U]: string}
         : never;
 
 export class ParserBind {
-    private static _epp: {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        emit_bool_expr(expr: string, equality_approximate_threshold: number): string;
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        emit_number_expr(expr: string): string;
-    }|null = null;
+    private static _epp: typeof import("../../epp")|null = null;
 
     public static async init(): Promise<void> {
         ParserBind._epp = await import("../../epp");
@@ -26,16 +23,14 @@ export class ParserBind {
     }
 
     private static parseResult<T extends (...args: number[]) => number|boolean>(
-        json: string,
+        emitResult: EmitResult,
         params: GetParametersLengthStringArray<T>
     ): TranspileResult<T> {
-        const obj = JSON.parse(json);
-
-        const func = obj.code === "Invalid equation"
+        const func = emitResult.code === "Invalid equation"
             ? null
-            : new Function(...params, "return " + obj.code) as T;
+            : new Function(...params, "return " + emitResult.code) as T;
 
-        const error = obj.diagnostics.map((d: any) => {
+        const error = JSON.parse(emitResult.diagnostics).map((d: any) => {
             return [
                 d.level === "Error" ? ErrorLevel.Error : ErrorLevel.Warning,
                 d.message

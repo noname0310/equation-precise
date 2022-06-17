@@ -1,8 +1,7 @@
-use serde::Serialize;
-use diagnostic::Diagnostic;
+use wasm_bindgen::prelude::wasm_bindgen;
 
-#[derive(Serialize)]
-pub(crate) struct EmitResult {
-    pub(crate) code: String,
-    pub(crate) diagnostics: Vec<Diagnostic>,
+#[wasm_bindgen(getter_with_clone)]
+pub struct EmitResult {
+    pub code: String,
+    pub diagnostics: String,
 }

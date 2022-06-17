@@ -31,7 +31,7 @@ lazy_static! {
 pub fn emit_bool_expr(
     expr: &str,
     equality_approximate_threshold: f64
-) -> String {
+) -> EmitResult {
     diagnostic::Diagnostic::clear();
     
     let token_iter = lexer::token_iter(expr);
@@ -67,20 +67,16 @@ pub fn emit_bool_expr(
         result.push_str("Invalid equation");
     }
 
-    let serialized = serde_json::to_string(
-        &EmitResult {
-            code: result,
-            diagnostics: diagnostic::Diagnostic::diagnostics().to_vec()
-        }
-    ).unwrap();
-    
-    serialized
+    EmitResult {
+        code: result,
+        diagnostics: serde_json::to_string(&diagnostic::Diagnostic::diagnostics().to_vec()).unwrap()
+    }
 }
 
 #[wasm_bindgen]
 pub fn emit_number_expr(
     expr: &str
-) -> String {
+) -> EmitResult {
     diagnostic::Diagnostic::clear();
     
     let token_iter = lexer::token_iter(expr);
@@ -115,12 +111,8 @@ pub fn emit_number_expr(
         result.push_str("Invalid equation");
     }
 
-    let serialized = serde_json::to_string(
-        &EmitResult {
-            code: result,
-            diagnostics: diagnostic::Diagnostic::diagnostics().to_vec()
-        }
-    ).unwrap();
-
-    serialized
+    EmitResult {
+        code: result,
+        diagnostics: serde_json::to_string(&diagnostic::Diagnostic::diagnostics().to_vec()).unwrap()
+    }
 }
