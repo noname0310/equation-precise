@@ -44,7 +44,7 @@ lazy_static! {
 }
 
 pub fn transplie_to_js(
-    ast: &Box<Expr>,
+    ast: &Expr,
     constant_name_map: &HashMap<String, String>,
     equality_approximate_threshold: f64,
 ) -> String {
@@ -55,12 +55,12 @@ pub fn transplie_to_js(
 }
 
 fn transplie_to_js_internal(
-    ast: &Box<Expr>,
+    ast: &Expr,
     constant_name_map: &HashMap<String, String>,
     equality_approximate_threshold: f64,
     result: &mut String, 
 ) {
-    match ast.as_ref() {
+    match ast {
         Expr::Id(id) => {
             if let Some(constant_name) = constant_name_map.get(id) {
                 result.push_str(constant_name);
