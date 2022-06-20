@@ -315,3 +315,7 @@ fn transplie_to_js_internal(
         },
     }
 }
+
+pub fn differentiate_expr(ast: &Expr) -> Box<Expr> {
+    todo!()
+}
