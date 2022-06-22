@@ -2,6 +2,8 @@ import { Vector3 } from "three/src/Three";
 import { 
     Bootstrapper as BaseBootstrapper,
     Camera,
+    CssSpriteRenderer,
+    GameObject,
     PrefabRef,
     SceneBuilder
 } from "the-world-engine";
@@ -12,6 +14,7 @@ import { GridRenderer } from "./script/GridRenderer";
 import { AxisRenderer } from "./script/AxisRenderer";
 import { GridUnitRenderer } from "./script/GridUnitRenderer";
 import { UiController } from "./script/UiController";
+import { PointerInputListener } from "./script/PointerInputListener";
 
 export class Bootstrapper extends BaseBootstrapper {
     public run(): SceneBuilder {
@@ -19,6 +22,8 @@ export class Bootstrapper extends BaseBootstrapper {
 
         const cameraController = new PrefabRef<CameraController>();
         const graphRenderer = new PrefabRef<GraphRenderer>();
+
+        const testCursor = new PrefabRef<GameObject>();
 
         return this.sceneBuilder
             .withChild(instantiater.buildGameObject("ui-controller")
@@ -40,7 +45,7 @@ export class Bootstrapper extends BaseBootstrapper {
                 })
                 .getComponent(GraphRenderer, graphRenderer))
 
-            .withChild(instantiater.buildGameObject("camera", new Vector3(0, 0, -1))
+            .withChild(instantiater.buildGameObject("camera", new Vector3(0, 0, 1))
                 .withComponent(Camera, c => c.viewSize = 4)
                 .withComponent(CameraController)
                 .withComponent(GridRenderer)
@@ -56,7 +61,23 @@ export class Bootstrapper extends BaseBootstrapper {
                     };
                     c.cameraController = cameraController.ref!;
                 })
+                .withComponent(PointerInputListener, c => {
+                    const tempVector = new Vector3();
+                    c.onPointerMove.addListener(e => {
+                        tempVector.set(e.position.x, e.position.y, 0);
+                        c.transform.transformPoint(tempVector);
+                        testCursor.ref!.transform.position.copy(tempVector);
+                    });
+                })
                 .getComponent(CameraController, cameraController))
+
+            .withChild(instantiater.buildGameObject("test-cursor")
+                .withComponent(CssSpriteRenderer, c => {
+                    c.imageWidth = 0.5;
+                    c.imageHeight = 0.5;
+                    c.pointerEvents = false;
+                })
+                .getGameObject(testCursor))
         ;
     }
 }
