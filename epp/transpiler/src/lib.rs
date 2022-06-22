@@ -316,6 +316,148 @@ fn transplie_to_js_internal(
     }
 }
 
-pub fn differentiate_expr(ast: &Expr) -> Box<Expr> {
+pub fn differentiate_expr(ast: &Expr) -> Result<Box<Expr>, String> {
+    match ast {
+        Expr::Eq(_, _) => Err("Cannot differentiate an equality expression".to_string()),
+        Expr::Lt(_, _) => Err("Cannot differentiate a less than expression".to_string()),
+        Expr::Gt(_, _) => Err("Cannot differentiate a greater than expression".to_string()),
+        Expr::Le(_, _) => Err("Cannot differentiate a less than or equal expression".to_string()),
+        Expr::Ge(_, _) => Err("Cannot differentiate a greater than or equal expression".to_string()),
+        Expr::Unary(_) => todo!(),
+        Expr::Add(lhs, rhs) => Ok(
+            Box::new(Expr::Add(
+                differentiate_expr(lhs)?,
+                differentiate_expr(rhs)?,
+            ))
+        ),
+        Expr::Sub(lhs, rhs) => Ok(
+            Box::new(Expr::Sub(
+                differentiate_expr(lhs)?,
+                differentiate_expr(rhs)?,
+            ))
+        ),
+        Expr::Mul(lhs, rhs) => Ok(
+            Box::new(Expr::Add(
+                Box::new(Expr::Mul(
+                    differentiate_expr(lhs)?,
+                    rhs.clone(),
+                )),
+                Box::new(Expr::Mul(
+                    lhs.clone(),
+                    differentiate_expr(rhs)?,
+                )),
+            ))
+        ),
+        Expr::Div(lhs, rhs) => Ok(
+            Box::new(Expr::Div(
+                Box::new(Expr::Sub(
+                    Box::new(Expr::Mul(
+                        differentiate_expr(lhs)?,
+                        rhs.clone(),
+                    )),
+                    Box::new(Expr::Mul(
+                        lhs.clone(),
+                        differentiate_expr(rhs)?,
+                    )),
+                )),
+                Box::new(Expr::Pow(
+                    rhs.clone(),
+                    Box::new(Expr::Literal(2.0)),
+                )),
+            ))
+        ),
+        Expr::Mod(_, _) => Err("Cannot differentiate a modulo expression".to_string()),
+        Expr::Pow(lhs, rhs) => {
+            if let Expr::Id(id) = lhs.as_ref() {
+                if id == "e" {
+                    Ok(Box::new(ast.clone()))
+                } else {
+                    Ok(
+                        Box::new(Expr::Mul(
+                            Box::new(Expr::Pow(
+                                lhs.clone(),
+                                rhs.clone(),
+                            )),
+                            Box::new(
+                                Expr::Call("ln".to_string(), vec![lhs.clone()]),
+                            ),
+                        ))
+                    )
+                }
+            } else {
+                todo!()
+            }
+        },
+        Expr::Call(function_name, args) => {
+            match function_name.as_str() {
+                "sin" => {
+
+                    Ok(Box::new(Expr::Call("cos".to_string(), args.clone())))
+                },
+                "cos" => Ok(Box::new(Expr::Unary(Box::new(Expr::Call("sin".to_string(), args.clone()))))), // (cos (f(x)))` = -sin (f(x)) * f'(x)
+                "tan" => Ok(Box::new(Expr::Div(
+                    Box::new(Expr::Literal(1.0)),
+                    Box::new(Expr::Pow(
+                        Box::new(Expr::Call("cos".to_string(), args.clone())),
+                        Box::new(Expr::Literal(2.0))
+                    )),
+                ))),
+                "ln" => Ok(Box::new(Expr::Div(
+                    Box::new(Expr::Literal(1.0)),
+                    args[0].clone(),
+                ))),
+                "ln_1p" => Ok(Box::new(Expr::Mul(
+                    Box::new(Expr::Literal(1.0)),
+                    Box::new(Expr::Div(
+                        Box::new(Expr::Literal(1.0)),
+                        args[0].clone(), //(ln(x + 1))  = 1/(x+1)
+                    )),
+                ))),
+                "log2" => Ok(Box::new(Expr::Div(
+                    Box::new(Expr::Literal(1.0)),
+                    Box::new(Expr::Mul(
+                        args[0].clone(),
+                        Box::new(Expr::Call("ln".to_string(), vec![Box::new(Expr::Literal(2.0))]))
+                    )),
+                ))),
+                "log10" => Ok(Box::new(Expr::Div(
+                    Box::new(Expr::Literal(1.0)),
+                    Box::new(Expr::Mul(
+                        args[0].clone(),
+                        Box::new(Expr::Call("ln".to_string(), vec![Box::new(Expr::Literal(10.0))]))
+                    )),
+                ))),
+                "log" => Ok(Box::new(Expr::Div(
+                    Box::new(Expr::Call("ln".to_string(), vec![args[0].clone()])),
+                    Box::new(Expr::Call("ln".to_string(), vec![args[1].clone()]))
+                ))),
+                "sqrt" => Ok(Box::new(Expr::Div(
+                    Box::new(Expr::Literal(1.0)),
+                    Box::new(Expr::Mul(
+                        Box::new(Expr::Literal(2.0)),
+                        Box::new(Expr::Call("sqrt".to_string(), vec![args[0].clone()]))
+                    ))
+                ))),
+                "cbrt" => Ok(Box::new(Expr::Div(
+                    Box::new(Expr::Literal(1.0)),
+                    Box::new(Expr::Mul(
+                        Box::new(Expr::Literal(3.0)),
+                        Box::new(Expr::Pow(
+                            Box::new(Expr::Call("cbrt".to_string(), vec![args[0].clone()])),
+                            Box::new(Expr::Literal(2.0))
+                        ))
+                    ))
+                ))),
+                "exp" => Ok(Box::new(ast.clone())),
+                "exp_m1" => Ok(Box::new(Expr::Call("exp".to_string(), args.clone()))),
+                _ => Err(format!("Cannot diffwewntiate function {}", function_name))
+            }
+        },
+        Expr::Id(_) => todo!(),
+        Expr::Literal(_) => todo!(),
+    }
+}
+
+fn expend_expr_to_composite(expr: &Expr) -> Box<Expr> {
     todo!()
 }

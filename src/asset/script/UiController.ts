@@ -35,12 +35,13 @@ export class UiController extends Component {
             return;
         }
 
-        const transpileResult = ParserBind.emitNumberExpr(value.split("=")[1]);
-        if (!transpileResult.func) {
+        const parseResult = ParserBind.parseNumberExpr(value.split("=")[1]);
+        const ast = parseResult.ast;
+        if (!ast) {
             const errorMessageDiv = this.errorMessageDiv;
             if (errorMessageDiv) {
                 errorMessageDiv.innerHTML = "";
-                const transpileError = transpileResult.error;
+                const transpileError = parseResult.error;
                 for (let i = 0; i < transpileError.length; ++i) {
                     const [level, message] = transpileError[i];
                     errorMessageDiv.appendChild(
@@ -58,8 +59,10 @@ export class UiController extends Component {
         }
 
         if (this._graphRenderer) {
-            this._graphRenderer.equation = transpileResult.func;
+            this._graphRenderer.equation = ast.emit();
         }
+
+        parseResult.dispose();
     }
 
     public get equationInputField(): HTMLInputElement|null {

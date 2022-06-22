@@ -1,5 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
+use ast::Expr;
 use lexer;
 use parser;
 use diagnostic;
@@ -7,7 +8,7 @@ use transpiler;
 use wasm_bindgen::prelude::*;
 use std::f64;
 
-use crate::emit_result::EmitResult;
+use crate::{parse_result::ParseResult};
 
 lazy_static! {
     pub static ref CONSTANTS: HashMap<String, f64> = HashMap::from([
@@ -27,11 +28,36 @@ lazy_static! {
     ]);
 }
 
+static mut AST_MAP: Option<HashMap<i32, Box<Expr>>> = None;
+static mut NEXT_ID: i32 = 1;
+
+fn ast_map() -> &'static mut HashMap<i32, Box<Expr>> {
+    if let Some(map) = unsafe { AST_MAP.as_mut() } {
+        map
+    } else {
+        unsafe {
+            AST_MAP = Some(HashMap::new());
+            AST_MAP.as_mut().unwrap()
+        }
+    }
+}
+
+fn register_ast(ast: Box<Expr>) -> i32 {
+    let id = unsafe { NEXT_ID };
+    ast_map().insert(id, ast);
+    unsafe { NEXT_ID += 1; }
+    id
+}
+
 #[wasm_bindgen]
-pub fn emit_bool_expr(
-    expr: &str,
-    equality_approximate_threshold: f64
-) -> EmitResult {
+pub fn dispose_ast(id: i32) {
+    ast_map().remove(&id);
+}
+
+#[wasm_bindgen]
+pub fn parse_bool_expr(
+    expr: &str
+) -> ParseResult {
     diagnostic::Diagnostic::clear();
     
     let token_iter = lexer::token_iter(expr);
@@ -43,7 +69,7 @@ pub fn emit_bool_expr(
         )
     );
 
-    let mut result = String::new();
+    let result;
 
     if let Ok(ast) = ast {
         if !validator::validate_bool_equation(
@@ -55,28 +81,36 @@ pub fn emit_bool_expr(
                 "y".to_string()
             ])
         ) {
-            result.push_str("Invalid expression");
+            result = -1;
         } else {
-            result.push_str(transpiler::transplie_to_js(
-                &ast,
-                &CONSTANTS_NAMES,
-                equality_approximate_threshold
-            ).as_str());
+            result = register_ast(ast);
         }
     } else {
-        result.push_str("Invalid equation");
+        result = -1;
     }
 
-    EmitResult {
-        code: result,
+    ParseResult {
+        ast_id: result,
         diagnostics: serde_json::to_string(&diagnostic::Diagnostic::diagnostics().to_vec()).unwrap()
     }
 }
 
 #[wasm_bindgen]
-pub fn emit_number_expr(
+pub fn emit_bool_expr(
+    ast_id: i32,
+    equality_approximate_threshold: f64
+) -> String {
+    transpiler::transplie_to_js(
+        &ast_map().get(&ast_id).unwrap(),
+        &CONSTANTS_NAMES,
+        equality_approximate_threshold
+    )
+}
+
+#[wasm_bindgen]
+pub fn parse_number_expr(
     expr: &str
-) -> EmitResult {
+) -> ParseResult {
     diagnostic::Diagnostic::clear();
     
     let token_iter = lexer::token_iter(expr);
@@ -88,7 +122,7 @@ pub fn emit_number_expr(
         )
     );
 
-    let mut result = String::new();
+    let result;
 
     if let Ok(ast) = ast {
         if !validator::validate_number_equation(
@@ -99,20 +133,27 @@ pub fn emit_number_expr(
                 "x".to_string()
             ])
         ) {
-            result.push_str("Invalid equation");
+            result = -1;
         } else {
-            result.push_str(transpiler::transplie_to_js(
-                &ast,
-                &CONSTANTS_NAMES,
-                0.0
-            ).as_str());
+            result = register_ast(ast);
         }
     } else {
-        result.push_str("Invalid equation");
+        result = -1;
     }
 
-    EmitResult {
-        code: result,
+    ParseResult {
+        ast_id: result,
         diagnostics: serde_json::to_string(&diagnostic::Diagnostic::diagnostics().to_vec()).unwrap()
     }
+}
+
+#[wasm_bindgen]
+pub fn emit_number_expr(
+    ast_id: i32
+) -> String {
+    transpiler::transplie_to_js(
+        &ast_map().get(&ast_id).unwrap(),
+        &CONSTANTS_NAMES,
+        0.0
+    )
 }
