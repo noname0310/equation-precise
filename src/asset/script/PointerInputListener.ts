@@ -3,6 +3,7 @@ import {
     Component, CssHtmlElementRenderer, EventContainer, IEventContainer
 } from "the-world-engine";
 import { Vector2 } from "three/src/Three";
+import { CameraController } from "./CameraController";
 
 /**
  * pointer event object
@@ -34,6 +35,7 @@ export class PointerEvent {
 export class PointerInputListener extends Component {
     public override readonly requiredComponents = [Camera];
     public override readonly disallowMultipleComponent: boolean = true;
+
     private readonly _onPointerDownEvent = new EventContainer<(event: PointerEvent) => void>();
     private readonly _onPointerUpEvent = new EventContainer<(event: PointerEvent) => void>();
     private readonly _onPointerEnterEvent = new EventContainer<(event: PointerEvent) => void>();
@@ -44,6 +46,7 @@ export class PointerInputListener extends Component {
 
     private _camera: Camera|null = null;
     private _htmlRenderer: CssHtmlElementRenderer|null = null;
+    private _cameraController: CameraController|null = null;
     
     private static readonly _viewScale = 0.001;
 
@@ -57,7 +60,21 @@ export class PointerInputListener extends Component {
         const aspect = screen.width / screen.height;
         renderer.elementWidth = viewSize * 2 * aspect;
         renderer.elementHeight = viewSize * 2;
+
+        this._cameraController = this.gameObject.getComponent(CameraController);
+        if (this._cameraController) {
+            this._cameraController.onZoom.addListener(this.updateSize);
+        }
     }
+
+    private readonly updateSize = (): void => {
+        const renderer = this._htmlRenderer!;
+        const viewSize = this._camera!.viewSize;
+        const screen = this.engine.screen;
+        const aspect = screen.width / screen.height;
+        renderer.elementWidth = viewSize * 2 * aspect;
+        renderer.elementHeight = viewSize * 2;
+    };
     
     private createRenderer(): CssHtmlElementRenderer {
         if (this._htmlRenderer) return this._htmlRenderer;
@@ -99,6 +116,11 @@ export class PointerInputListener extends Component {
         if (this._htmlRenderer) {
             this._htmlRenderer.destroy();
             this._htmlRenderer = null;
+        }
+
+        if (this._cameraController) {
+            this._cameraController.onZoom.removeListener(this.updateSize);
+            this._cameraController = null;
         }
     }
 
