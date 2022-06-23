@@ -66,6 +66,11 @@ export class ParserBind {
         if (!this._epp) throw new Error("ParserBind is not initialized");
         return this._epp.differentiate_expr(astId);
     }
+
+    public static astToString(astId: number): string {
+        if (!this._epp) throw new Error("ParserBind is not initialized");
+        return this._epp.ast_to_string(astId);
+    }
 }
 
 export class Ast<T extends (...args: number[]) => number|boolean> {
@@ -112,6 +117,11 @@ export class Ast<T extends (...args: number[]) => number|boolean> {
         const transformResult = new TransformResult<T>(transformedAst, lowTransformResult.error);
         lowTransformResult.free();
         return transformResult;
+    }
+
+    public toString(): string {
+        if (this._astId === 0) throw new Error("Ast is disposed");
+        return ParserBind.astToString(this._astId);
     }
 }
 

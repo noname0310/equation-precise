@@ -493,7 +493,7 @@ pub fn differentiate_expr(ast: &Expr) -> Result<Box<Expr>, String> {
                             "cos".to_string(),
                             args.clone(),
                         )),
-                        differentiate_expr(ast)?
+                        differentiate_expr(&args[0])?,
                     ))
                 ),
                 "cos" => Ok( // (cos(f(x)))' = -sin(f(x)) * f'(x)
@@ -504,12 +504,12 @@ pub fn differentiate_expr(ast: &Expr) -> Result<Box<Expr>, String> {
                                 args.clone()
                             ))
                         )),
-                        differentiate_expr(ast)?
+                        differentiate_expr(&args[0])?,
                     ))
                 ),
                 "tan" => Ok( // (tan(f(x)))' = sec^2(f(x)) * f'(x) = 1 / (cos^2(f(x))) * f'(x) = f'(x) / (cos^2(f(x)))
                     Box::new(Expr::Div(
-                        differentiate_expr(ast)?,
+                        differentiate_expr(&args[0])?,
                         Box::new(Expr::Pow(
                             Box::new(Expr::Call("cos".to_string(), args.clone())),
                             Box::new(Expr::Literal(2.0))
@@ -518,13 +518,13 @@ pub fn differentiate_expr(ast: &Expr) -> Result<Box<Expr>, String> {
                 ),
                 "ln" => Ok( // (ln(f(x)))' = f'(x) / f(x)
                     Box::new(Expr::Div(
-                        differentiate_expr(ast)?,
+                        differentiate_expr(&args[0])?,
                         args[0].clone(),
                     ))
                 ),
                 "ln_1p" => Ok( // (ln_1p(f(x)))' = f'(x) / (f(x) + 1)
                     Box::new(Expr::Div(
-                        differentiate_expr(ast)?,
+                        differentiate_expr(&args[0])?,
                         Box::new(Expr::Add(
                             args[0].clone(),
                             Box::new(Expr::Literal(1.0))
@@ -533,7 +533,7 @@ pub fn differentiate_expr(ast: &Expr) -> Result<Box<Expr>, String> {
                 ),
                 "log2" => Ok( // (log2(f(x)))' = f'(x) / (f(x) * ln(2))
                     Box::new(Expr::Div(
-                        differentiate_expr(ast)?,
+                        differentiate_expr(&args[0])?,
                         Box::new(Expr::Mul(
                             args[0].clone(),
                             Box::new(Expr::Call("ln".to_string(), vec![Box::new(Expr::Literal(2.0))]))
@@ -542,7 +542,7 @@ pub fn differentiate_expr(ast: &Expr) -> Result<Box<Expr>, String> {
                 ),
                 "log10" => Ok( // (log10(f(x)))' = f'(x) / (f(x) * ln(10))
                     Box::new(Expr::Div(
-                        differentiate_expr(ast)?,
+                        differentiate_expr(&args[0])?,
                         Box::new(Expr::Mul(
                             args[0].clone(),
                             Box::new(Expr::Call("ln".to_string(), vec![Box::new(Expr::Literal(10.0))]))
@@ -557,7 +557,7 @@ pub fn differentiate_expr(ast: &Expr) -> Result<Box<Expr>, String> {
                 ),
                 "sqrt" => Ok( // (sqrt(f(x)))' = f'(x) / (2 * sqrt(f(x)))
                     Box::new(Expr::Div(
-                        differentiate_expr(ast)?,
+                        differentiate_expr(&args[0])?,
                         Box::new(Expr::Mul(
                             Box::new(Expr::Literal(2.0)),
                             Box::new(Expr::Call("sqrt".to_string(), vec![args[0].clone()]))
@@ -566,7 +566,7 @@ pub fn differentiate_expr(ast: &Expr) -> Result<Box<Expr>, String> {
                 ),
                 "cbrt" => Ok( // (cbrt(f(x)))' = f'(x) / (3 * cbrt(f(x))^2)
                     Box::new(Expr::Div(
-                        differentiate_expr(ast)?,
+                        differentiate_expr(&args[0])?,
                         Box::new(Expr::Mul(
                             Box::new(Expr::Literal(3.0)),
                             Box::new(Expr::Pow(
@@ -579,13 +579,13 @@ pub fn differentiate_expr(ast: &Expr) -> Result<Box<Expr>, String> {
                 "exp" => Ok( // (e^f(x))' = e^f(x) * f'(x)
                     Box::new(Expr::Mul(
                         Box::new(Expr::Call("exp".to_string(), vec![args[0].clone()])),
-                        differentiate_expr(ast)?
+                        differentiate_expr(&args[0])?,
                     ))
                 ),
                 "exp_m1" => Ok( // (e^f(x) - 1)' = e^f(x) * f'(x)
                     Box::new(Expr::Mul(
                         Box::new(Expr::Call("exp".to_string(), vec![args[0].clone()])),
-                        differentiate_expr(ast)?
+                        differentiate_expr(&args[0])?,
                     ))
                 ),
                 _ => Err(format!("Cannot differentiate function {}", function_name))
