@@ -51,16 +51,20 @@ export class UiController extends Component {
                 }
             }
             return;
-        } else {
-            const errorMessageDiv = this.errorMessageDiv;
-            if (errorMessageDiv) {
-                errorMessageDiv.innerHTML = "";
-            }
+        }
+
+        const errorMessageDiv = this.errorMessageDiv;
+        if (errorMessageDiv) {
+            errorMessageDiv.innerHTML = "";
         }
 
         if (this._graphRenderer) {
             this._graphRenderer.equation = ast.emit();
         }
+
+        const transformed = ast.differentiate().ast;
+        console.log(transformed?.emit().toString());
+        transformed?.dispose();
 
         parseResult.dispose();
     }

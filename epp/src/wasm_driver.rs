@@ -8,7 +8,7 @@ use transpiler;
 use wasm_bindgen::prelude::*;
 use std::f64;
 
-use crate::{parse_result::ParseResult};
+use crate::{parse_result::ParseResult, transform_result::TransformResult};
 
 lazy_static! {
     pub static ref CONSTANTS: HashMap<String, f64> = HashMap::from([
@@ -156,4 +156,31 @@ pub fn emit_number_expr(
         &CONSTANTS_NAMES,
         0.0
     )
+}
+
+#[wasm_bindgen]
+pub fn differentiate_expr(ast_id: i32) -> TransformResult {
+    let ast = ast_map().get(&ast_id).unwrap();
+    let differentiated = transpiler::differentiate_expr(ast);
+    match differentiated {
+        Ok(ast) => {
+            let id = register_ast(ast);
+            TransformResult {
+                ast_id: id,
+                error: "".to_string()
+            }
+        },
+        Err(err) => {
+            TransformResult {
+                ast_id: -1,
+                error: err
+            }
+        }
+    }
+}
+
+#[wasm_bindgen]
+pub fn ast_to_string(ast_id: i32) -> String {
+    let ast = ast_map().get(&ast_id).unwrap();
+    transpiler::ast_to_string(ast)
 }

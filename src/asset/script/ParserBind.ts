@@ -1,4 +1,7 @@
-import { ParseResult as LowParseResult } from "../../epp";
+import { 
+    ParseResult as LowParseResult,
+    TransformResult as LowTransformResult
+} from "../../epp";
 
 type GetParametersLengthStringArray<T extends (...args: number[]) => any> =
     T extends (...args: infer U) => any
@@ -58,6 +61,11 @@ export class ParserBind {
 
         return new ParseResult<T>(ast, error);
     }
+
+    public static differentiateExpr(astId: number): LowTransformResult {
+        if (!this._epp) throw new Error("ParserBind is not initialized");
+        return this._epp.differentiate_expr(astId);
+    }
 }
 
 export class Ast<T extends (...args: number[]) => number|boolean> {
@@ -92,6 +100,19 @@ export class Ast<T extends (...args: number[]) => number|boolean> {
             throw new Error("Ast has too many parameters");
         }
     }
+
+    public differentiate(): TransformResult<T> {
+        if (this._astId === 0) throw new Error("Ast is disposed");
+        const lowTransformResult = ParserBind.differentiateExpr(this._astId);
+
+        const transformedAst = lowTransformResult.ast_id === -1 
+            ? null
+            : new Ast(lowTransformResult.ast_id, this._params);
+
+        const transformResult = new TransformResult<T>(transformedAst, lowTransformResult.error);
+        lowTransformResult.free();
+        return transformResult;
+    }
 }
 
 export class ParseResult<T extends (...args: number[]) => number|boolean> {
@@ -99,6 +120,20 @@ export class ParseResult<T extends (...args: number[]) => number|boolean> {
     public readonly error: [ErrorLevel, string][];
 
     public constructor(ast: Ast<T>|null, error: [ErrorLevel, string][]) {
+        this.ast = ast;
+        this.error = error;
+    }
+
+    public dispose(): void {
+        if (this.ast) this.ast.dispose();
+    }
+}
+
+export class TransformResult<T extends (...args: number[]) => number|boolean> {
+    public readonly ast: Ast<T>|null;
+    public readonly error: string;
+
+    public constructor(ast: Ast<T>|null, error: string) {
         this.ast = ast;
         this.error = error;
     }
