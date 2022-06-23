@@ -483,6 +483,7 @@ pub fn differentiate_expr(ast: &Expr) -> Result<Box<Expr>, String> {
         ),
         Expr::Mod(_, _) => Err("Cannot differentiate a modulo expression".to_string()),
         Expr::Pow(lhs, rhs) => Ok( // (f(x) ^ g(x))' = (g'(x) * ln(f(x)) + g(x) * (f'(x) / f(x))) * f(x) ^ g(x)
+            // this mathod is not well defined for negative exponents
             Box::new(Expr::Mul(
                 Box::new(Expr::Add(
                     Box::new(Expr::Mul(
