@@ -482,9 +482,27 @@ pub fn differentiate_expr(ast: &Expr) -> Result<Box<Expr>, String> {
             ))
         ),
         Expr::Mod(_, _) => Err("Cannot differentiate a modulo expression".to_string()),
-        Expr::Pow(lhs, rhs) => {
-            todo!()
-        },
+        Expr::Pow(lhs, rhs) => Ok( // (f(x) ^ g(x))' = (g'(x) * ln(f(x)) + g(x) * (f'(x) / f(x))) * f(x) ^ g(x)
+            Box::new(Expr::Mul(
+                Box::new(Expr::Add(
+                    Box::new(Expr::Mul(
+                        differentiate_expr(rhs)?,
+                        Box::new(Expr::Call("ln".to_string(), vec![lhs.clone()])),
+                    )),
+                    Box::new(Expr::Mul(
+                        rhs.clone(),
+                        Box::new(Expr::Div(
+                            differentiate_expr(lhs)?,
+                            lhs.clone(),
+                        )),
+                    ))
+                )),
+                Box::new(Expr::Pow(
+                    lhs.clone(),
+                    rhs.clone(),
+                ))
+            ))
+        ),
         Expr::Call(function_name, args) => {
             match function_name.as_str() {
                 "sin" => Ok( // (sin(f(x)))' = cos(f(x)) * f'(x)
