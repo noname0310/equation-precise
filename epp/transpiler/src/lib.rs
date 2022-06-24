@@ -482,28 +482,41 @@ pub fn differentiate_expr(ast: &Expr) -> Result<Box<Expr>, String> {
             ))
         ),
         Expr::Mod(_, _) => Err("Cannot differentiate a modulo expression".to_string()),
-        Expr::Pow(lhs, rhs) => Ok( // (f(x) ^ g(x))' = (g'(x) * ln(f(x)) + g(x) * (f'(x) / f(x))) * f(x) ^ g(x)
-            // this mathod is not well defined for negative exponents
-            Box::new(Expr::Mul(
-                Box::new(Expr::Add(
+        Expr::Pow(lhs, rhs) => {
+            let lhs_has_x = check_ast_has_x(lhs);
+            let rhs_has_x = check_ast_has_x(rhs);
+            
+            if lhs_has_x && rhs_has_x { // (a ^ b)'
+                todo!()
+            } else if lhs_has_x { // (a ^ g(x))'
+                todo!()
+            } else if rhs_has_x { // (f(x) ^ a)'
+                todo!()
+            } else { // (f(x) ^ g(x))' = (g'(x) * ln(f(x)) + g(x) * (f'(x) / f(x))) * f(x) ^ g(x)
+                Ok( 
+                    // this mathod is not well defined for negative exponents
                     Box::new(Expr::Mul(
-                        differentiate_expr(rhs)?,
-                        Box::new(Expr::Call("ln".to_string(), vec![lhs.clone()])),
-                    )),
-                    Box::new(Expr::Mul(
-                        rhs.clone(),
-                        Box::new(Expr::Div(
-                            differentiate_expr(lhs)?,
-                            lhs.clone(),
+                        Box::new(Expr::Add(
+                            Box::new(Expr::Mul(
+                                differentiate_expr(rhs)?,
+                                Box::new(Expr::Call("ln".to_string(), vec![lhs.clone()])),
+                            )),
+                            Box::new(Expr::Mul(
+                                rhs.clone(),
+                                Box::new(Expr::Div(
+                                    differentiate_expr(lhs)?,
+                                    lhs.clone(),
+                                )),
+                            ))
                         )),
+                        Box::new(Expr::Pow(
+                            lhs.clone(),
+                            rhs.clone(),
+                        ))
                     ))
-                )),
-                Box::new(Expr::Pow(
-                    lhs.clone(),
-                    rhs.clone(),
-                ))
-            ))
-        ),
+                )
+            }
+        },
         Expr::Call(function_name, args) => {
             match function_name.as_str() {
                 "sin" => Ok( // (sin(f(x)))' = cos(f(x)) * f'(x)
@@ -612,6 +625,30 @@ pub fn differentiate_expr(ast: &Expr) -> Result<Box<Expr>, String> {
         },
         Expr::Id(_) => Ok(Box::new(Expr::Literal(1.0))),
         Expr::Literal(_) => Ok(Box::new(Expr::Literal(0.0))),
+    }
+}
+
+fn check_ast_has_x(ast: &Expr) -> bool {
+    match ast {
+        Expr::Eq(lhs, rhs)
+        | Expr::Lt(lhs, rhs)
+        | Expr::Gt(lhs, rhs)
+        | Expr::Le(lhs, rhs)
+        | Expr::Ge(lhs, rhs)
+        | Expr::Add(lhs, rhs)
+        | Expr::Sub(lhs, rhs)
+        | Expr::Mul(lhs, rhs)
+        | Expr::Div(lhs, rhs)
+        | Expr::Mod(lhs, rhs)
+        | Expr::Pow(lhs, rhs) => {
+            check_ast_has_x(lhs) || check_ast_has_x(rhs)
+        },
+        Expr::Call(_, args) => {
+            args.iter().any(|arg| check_ast_has_x(arg))
+        },
+        Expr::Unary(expr) => check_ast_has_x(expr),
+        Expr::Literal(_) => false,
+        Expr::Id(name) => name == "x",
     }
 }
 
