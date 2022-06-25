@@ -147,3 +147,181 @@ fn fold_const_expr(ast: &Expr, variables: &HashMap<String, f64>) -> f64 {
         }
     }
 }
+
+pub fn fold_expr(ast: &Expr) -> Box<Expr> {
+    match ast {
+        Expr::Eq(lhs, rhs) => {
+            let lhs = fold_expr(lhs);
+            let rhs = fold_expr(rhs);
+            return Box::new(Expr::Eq(lhs, rhs));
+        },
+        Expr::Lt(lhs, rhs) => {
+            let lhs = fold_expr(lhs);
+            let rhs = fold_expr(rhs);
+            return Box::new(Expr::Lt(lhs, rhs));
+        },
+        Expr::Gt(lhs, rhs) => {
+            let lhs = fold_expr(lhs);
+            let rhs = fold_expr(rhs);
+            return Box::new(Expr::Gt(lhs, rhs));
+        },
+        Expr::Le(lhs, rhs) => {
+            let lhs = fold_expr(lhs);
+            let rhs = fold_expr(rhs);
+            return Box::new(Expr::Le(lhs, rhs));
+        },
+        Expr::Ge(lhs, rhs) => {
+            let lhs = fold_expr(lhs);
+            let rhs = fold_expr(rhs);
+            return Box::new(Expr::Ge(lhs, rhs));
+        },
+        Expr::Unary(expr) => {
+            let expr = fold_expr(expr);
+            if let Expr::Literal(expr) = expr.as_ref() {
+                return Box::new(Expr::Literal(-expr));
+            }
+            return Box::new(Expr::Unary(expr));
+        },
+        Expr::Add(lhs, rhs) => {
+            let lhs = fold_expr(lhs);
+            let rhs = fold_expr(rhs);
+
+            if let Expr::Literal(lhs) = lhs.as_ref() {
+                if *lhs == 0.0 {
+                    return rhs;
+                }
+            }
+
+            if let Expr::Literal(rhs) = rhs.as_ref() {
+                if *rhs == 0.0 {
+                    return lhs;
+                }
+            }
+            
+            if let Expr::Literal(lhs) = lhs.as_ref() {
+                if let Expr::Literal(rhs) = rhs.as_ref() {
+                    return Box::new(Expr::Literal(lhs + rhs));
+                }
+            }
+            return Box::new(Expr::Add(lhs, rhs));
+        },
+        Expr::Sub(lhs, rhs) => {
+            let lhs = fold_expr(lhs);
+            let rhs = fold_expr(rhs);
+
+            if let Expr::Literal(lhs) = lhs.as_ref() {
+                if *lhs == 0.0 {
+                    return Box::new(Expr::Unary(rhs));
+                }
+            }
+
+            if let Expr::Literal(rhs) = rhs.as_ref() {
+                if *rhs == 0.0 {
+                    return lhs;
+                }
+            }
+
+            if let Expr::Literal(lhs) = lhs.as_ref() {
+                if let Expr::Literal(rhs) = rhs.as_ref() {
+                    return Box::new(Expr::Literal(lhs - rhs));
+                }
+            }
+            return Box::new(Expr::Sub(lhs, rhs));
+        },
+        Expr::Mul(lhs, rhs) => {
+            let lhs = fold_expr(lhs);
+            let rhs = fold_expr(rhs);
+
+            if let Expr::Literal(lhs) = lhs.as_ref() {
+                if *lhs == 0.0 {
+                    return Box::new(Expr::Literal(0.0));
+                }
+                if *lhs == 1.0 {
+                    return rhs;
+                }
+            }
+
+            if let Expr::Literal(rhs) = rhs.as_ref() {
+                if *rhs == 0.0 {
+                    return Box::new(Expr::Literal(0.0));
+                }
+                if *rhs == 1.0 {
+                    return lhs;
+                }
+            }
+
+            if let Expr::Literal(lhs) = lhs.as_ref() {
+                if let Expr::Literal(rhs) = rhs.as_ref() {
+                    return Box::new(Expr::Literal(lhs * rhs));
+                }
+            }
+            return Box::new(Expr::Mul(lhs, rhs));
+        },
+        Expr::Div(lhs, rhs) => {
+            let lhs = fold_expr(lhs);
+            let rhs = fold_expr(rhs);
+
+            if let Expr::Literal(lhs) = lhs.as_ref() {
+                if *lhs == 0.0 {
+                    return Box::new(Expr::Literal(0.0));
+                }
+            }
+
+            if let Expr::Literal(lhs) = lhs.as_ref() {
+                if let Expr::Literal(rhs) = rhs.as_ref() {
+                    return Box::new(Expr::Literal(lhs / rhs));
+                }
+            }
+            return Box::new(Expr::Div(lhs, rhs));
+        },
+        Expr::Mod(lhs, rhs) => {
+            let lhs = fold_expr(lhs);
+            let rhs = fold_expr(rhs);
+            if let Expr::Literal(lhs) = lhs.as_ref() {
+                if let Expr::Literal(rhs) = rhs.as_ref() {
+                    return Box::new(Expr::Literal(lhs % rhs));
+                }
+            }
+            return Box::new(Expr::Mod(lhs, rhs));
+        },
+        Expr::Pow(lhs, rhs) => {
+            let lhs = fold_expr(lhs);
+            let rhs = fold_expr(rhs);
+
+            if let Expr::Literal(lhs) = lhs.as_ref() {
+                if *lhs == 0.0 {
+                    return Box::new(Expr::Literal(0.0));
+                }
+                if *lhs == 1.0 {
+                    return Box::new(Expr::Literal(1.0));
+                }
+            }
+
+            if let Expr::Literal(rhs) = rhs.as_ref() {
+                if *rhs == 0.0 {
+                    return Box::new(Expr::Literal(1.0));
+                }
+                if *rhs == 1.0 {
+                    return lhs;
+                }
+            }
+
+            if let Expr::Literal(lhs) = lhs.as_ref() {
+                if let Expr::Literal(rhs) = rhs.as_ref() {
+                    return Box::new(Expr::Literal(lhs.powf(*rhs)));
+                }
+            }
+            return Box::new(Expr::Pow(lhs, rhs));
+        },
+        Expr::Call(name, params) => {
+            let params = params.iter().map(|x| fold_expr(x)).collect();
+            return Box::new(Expr::Call(name.to_string(), params));
+        }
+        Expr::Id(name) => {
+            return Box::new(Expr::Id(name.to_string()));
+        }
+        Expr::Literal(literal) => {
+            return Box::new(Expr::Literal(*literal));
+        }
+    }
+}

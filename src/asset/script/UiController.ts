@@ -59,12 +59,14 @@ export class UiController extends Component {
         }
 
         const transformed = ast.differentiate();
-        console.log(transformed.ast?.toString() ?? transformed.error);
+        const folded = transformed.ast?.fold();
+        console.log(transformed.ast ? `transformed: ${transformed.ast.toString()}\ntransfolded: ${folded?.toString()}` : transformed.error);
 
         if (this._graphRenderer) {
-            this._graphRenderer.equation = transformed.ast?.emit() ?? ((): number => 0);
+            this._graphRenderer.equation = folded?.emit() ?? ((): number => 0);
         }
 
+        folded?.dispose();
         transformed?.dispose();
 
         parseResult.dispose();

@@ -71,6 +71,11 @@ export class ParserBind {
         if (!this._epp) throw new Error("ParserBind is not initialized");
         return this._epp.ast_to_string(astId);
     }
+
+    public static foldExpr(astId: number): number {
+        if (!this._epp) throw new Error("ParserBind is not initialized");
+        return this._epp.fold_expr(astId);
+    }
 }
 
 export class Ast<T extends (...args: number[]) => number|boolean> {
@@ -122,6 +127,12 @@ export class Ast<T extends (...args: number[]) => number|boolean> {
     public toString(): string {
         if (this._astId === 0) throw new Error("Ast is disposed");
         return ParserBind.astToString(this._astId);
+    }
+
+    public fold(): Ast<T> {
+        if (this._astId === 0) throw new Error("Ast is disposed");
+        const astId = ParserBind.foldExpr(this._astId);
+        return new Ast(astId, this._params);
     }
 }
 

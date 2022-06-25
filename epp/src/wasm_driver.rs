@@ -184,3 +184,10 @@ pub fn ast_to_string(ast_id: i32) -> String {
     let ast = ast_map().get(&ast_id).unwrap();
     transpiler::ast_to_string(ast)
 }
+
+#[wasm_bindgen]
+pub fn fold_expr(ast_id: i32) -> i32 {
+    let ast = ast_map().get(&ast_id).unwrap();
+    let folded = evaluator::fold_expr(ast);
+    register_ast(folded)
+}
