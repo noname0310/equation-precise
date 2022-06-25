@@ -488,20 +488,7 @@ pub fn differentiate_expr(ast: &Expr) -> Result<Box<Expr>, String> {
             
             if lhs_has_x && rhs_has_x { // (a ^ b)' = 0
                 Ok(Box::new(Expr::Literal(0.0)))
-            } else if lhs_has_x { // (a ^ g(x))' = a ^ g(x) * ln(a) * g'(x)
-                Ok(
-                    Box::new(Expr::Mul(
-                        Box::new(Expr::Pow(
-                            lhs.clone(),
-                            rhs.clone(),
-                        )),
-                        Box::new(Expr::Mul(
-                            Box::new(Expr::Call("ln".to_string(), vec![lhs.clone()])),
-                            differentiate_expr(rhs)?,
-                        )),
-                    ))
-                )
-            } else if rhs_has_x { // (f(x) ^ a)' = a * f(x) ^ (a - 1) * f'(x)
+            } else if lhs_has_x { // (f(x) ^ a)' = a * f(x) ^ (a - 1) * f'(x)
                 Ok(
                     Box::new(Expr::Mul(
                         Box::new(Expr::Mul(
@@ -515,6 +502,19 @@ pub fn differentiate_expr(ast: &Expr) -> Result<Box<Expr>, String> {
                             )),
                         )),
                         differentiate_expr(lhs)?
+                    ))
+                )
+            } else if rhs_has_x { // (a ^ g(x))' = a ^ g(x) * ln(a) * g'(x)
+                Ok(
+                    Box::new(Expr::Mul(
+                        Box::new(Expr::Pow(
+                            lhs.clone(),
+                            rhs.clone(),
+                        )),
+                        Box::new(Expr::Mul(
+                            Box::new(Expr::Call("ln".to_string(), vec![lhs.clone()])),
+                            differentiate_expr(rhs)?,
+                        )),
                     ))
                 )
             } else { // (f(x) ^ g(x))' = (g'(x) * ln(f(x)) + g(x) * (f'(x) / f(x))) * f(x) ^ g(x)
