@@ -41,6 +41,8 @@ export class UiController extends Component {
             const errorMessageDiv = this.errorMessageDiv;
             if (errorMessageDiv) {
                 errorMessageDiv.innerHTML = "";
+                errorMessageDiv.style.color = "red";
+
                 const transpileError = parseResult.error;
                 for (let i = 0; i < transpileError.length; ++i) {
                     const [level, message] = transpileError[i];
@@ -53,14 +55,32 @@ export class UiController extends Component {
             return;
         }
 
+        const transformed = ast.differentiate();
+        const folded = transformed.ast?.fold();
+
         const errorMessageDiv = this.errorMessageDiv;
         if (errorMessageDiv) {
             errorMessageDiv.innerHTML = "";
-        }
 
-        const transformed = ast.differentiate();
-        const folded = transformed.ast?.fold();
-        console.log(transformed.ast ? `transformed: ${transformed.ast.toString()}\ntransfolded: ${folded?.toString()}` : transformed.error);
+            if (transformed.ast) {
+                errorMessageDiv.style.color = "black";
+
+                errorMessageDiv.appendChild(
+                    new Text(`transformed: ${transformed.ast?.toString()}`)
+                );
+                errorMessageDiv.appendChild(document.createElement("br"));
+
+                errorMessageDiv.appendChild(
+                    new Text(`folded: ${folded?.toString()}`)
+                );
+            } else {
+                errorMessageDiv.style.color = "red";
+                
+                errorMessageDiv.appendChild(
+                    new Text(`Transform Error: ${transformed.error}`)
+                );
+            }
+        }
 
         if (this._graphRenderer) {
             this._graphRenderer.equation = folded?.emit() ?? ((): number => 0);

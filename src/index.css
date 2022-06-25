@@ -18,7 +18,7 @@ html, body {
     left: 10px;
     font-size: 20px;
     font-family: "Arial";
-    color: red;
+    z-index: 100;
 }
 
 .game_container {
