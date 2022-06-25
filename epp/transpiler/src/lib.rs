@@ -486,12 +486,37 @@ pub fn differentiate_expr(ast: &Expr) -> Result<Box<Expr>, String> {
             let lhs_has_x = check_ast_has_x(lhs);
             let rhs_has_x = check_ast_has_x(rhs);
             
-            if lhs_has_x && rhs_has_x { // (a ^ b)'
-                todo!()
-            } else if lhs_has_x { // (a ^ g(x))'
-                todo!()
-            } else if rhs_has_x { // (f(x) ^ a)'
-                todo!()
+            if lhs_has_x && rhs_has_x { // (a ^ b)' = 0
+                Ok(Box::new(Expr::Literal(0.0)))
+            } else if lhs_has_x { // (a ^ g(x))' = a ^ g(x) * ln(a) * g'(x)
+                Ok(
+                    Box::new(Expr::Mul(
+                        Box::new(Expr::Pow(
+                            lhs.clone(),
+                            rhs.clone(),
+                        )),
+                        Box::new(Expr::Mul(
+                            Box::new(Expr::Call("ln".to_string(), vec![lhs.clone()])),
+                            differentiate_expr(rhs)?,
+                        )),
+                    ))
+                )
+            } else if rhs_has_x { // (f(x) ^ a)' = a * f(x) ^ (a - 1) * f'(x)
+                Ok(
+                    Box::new(Expr::Mul(
+                        Box::new(Expr::Mul(
+                            rhs.clone(),
+                            Box::new(Expr::Pow(
+                                lhs.clone(),
+                                Box::new(Expr::Sub(
+                                    rhs.clone(),
+                                    Box::new(Expr::Literal(1.0)),
+                                )),
+                            )),
+                        )),
+                        differentiate_expr(lhs)?
+                    ))
+                )
             } else { // (f(x) ^ g(x))' = (g'(x) * ln(f(x)) + g(x) * (f'(x) / f(x))) * f(x) ^ g(x)
                 Ok( 
                     // this mathod is not well defined for negative exponents
@@ -581,11 +606,13 @@ pub fn differentiate_expr(ast: &Expr) -> Result<Box<Expr>, String> {
                         ))
                     ))
                 ),
-                "log" => Ok( // (log(f(x), g(x)))' = 
-                    Box::new(Expr::Div(
-                        Box::new(Expr::Call("ln".to_string(), vec![args[0].clone()])),
-                        Box::new(Expr::Call("ln".to_string(), vec![args[1].clone()]))
-                    ))
+                "log" => Ok( // log(f(x), g(x)) = ln(f(x)) / ln(g(x))
+                    differentiate_expr(
+                        &Box::new(Expr::Div(
+                            Box::new(Expr::Call("ln".to_string(), vec![args[0].clone()])),
+                            Box::new(Expr::Call("ln".to_string(), vec![args[1].clone()])),
+                        ))
+                    )?
                 ),
                 "sqrt" => Ok( // (sqrt(f(x)))' = f'(x) / (2 * sqrt(f(x)))
                     Box::new(Expr::Div(
