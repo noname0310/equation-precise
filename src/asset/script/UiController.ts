@@ -58,11 +58,11 @@ export class UiController extends Component {
             errorMessageDiv.innerHTML = "";
         }
 
-        const transformed = ast.differentiate().ast;
-        console.log(transformed?.toString());
+        const transformed = ast.differentiate();
+        console.log(transformed.ast?.toString() ?? transformed.error);
 
         if (this._graphRenderer) {
-            this._graphRenderer.equation = transformed?.emit() ?? ((): number => 0);
+            this._graphRenderer.equation = transformed.ast?.emit() ?? ((): number => 0);
         }
 
         transformed?.dispose();
