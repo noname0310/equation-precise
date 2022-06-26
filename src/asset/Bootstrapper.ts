@@ -2,8 +2,6 @@ import { Vector3 } from "three/src/Three";
 import { 
     Bootstrapper as BaseBootstrapper,
     Camera,
-    CssSpriteRenderer,
-    GameObject,
     PrefabRef,
     SceneBuilder
 } from "the-world-engine";
@@ -15,6 +13,7 @@ import { AxisRenderer } from "./script/AxisRenderer";
 import { GridUnitRenderer } from "./script/GridUnitRenderer";
 import { UiController } from "./script/UiController";
 import { PointerInputListener } from "./script/PointerInputListener";
+import { RootSolver } from "./script/RootSolver";
 
 export class Bootstrapper extends BaseBootstrapper {
     public run(): SceneBuilder {
@@ -22,8 +21,8 @@ export class Bootstrapper extends BaseBootstrapper {
 
         const cameraController = new PrefabRef<CameraController>();
         const graphRenderer = new PrefabRef<GraphRenderer>();
-
-        const testCursor = new PrefabRef<GameObject>();
+        const pointerInputListener = new PrefabRef<PointerInputListener>();
+        const uiController = new PrefabRef<UiController>();
 
         return this.sceneBuilder
             .withChild(instantiater.buildGameObject("ui-controller")
@@ -31,7 +30,8 @@ export class Bootstrapper extends BaseBootstrapper {
                     c.equationInputField = document.getElementById("input_equation") as HTMLInputElement;
                     c.errorMessageDiv = document.getElementById("error_message") as HTMLDivElement;
                     c.graphRenderer = graphRenderer.ref!;
-                }))
+                })
+                .getComponent(UiController, uiController))
 
             .withChild(instantiater.buildGameObject("graph-renderer")
                 .withComponent(GraphRenderer)
@@ -44,6 +44,21 @@ export class Bootstrapper extends BaseBootstrapper {
                     c.cameraController = cameraController.ref!;
                 })
                 .getComponent(GraphRenderer, graphRenderer))
+
+            .withChild(instantiater.buildGameObject("solver")
+                .withComponent(RootSolver, c => {
+                    c.uiController = uiController.ref!;
+                    c.pointerInputListener = pointerInputListener.ref!;
+                    c.resultDiv = document.getElementById("result_message") as HTMLDivElement;
+                })
+                .withComponent(CameraRelativeScaleController, c => {
+                    c.cameraRelativeScale = 0.01;
+                    const renderer = c.gameObject.getComponent(RootSolver)!;
+                    c.onZoom = (viewSize: number): void => {
+                        renderer.lineWidth = viewSize;
+                    };
+                    c.cameraController = cameraController.ref!;
+                }))
 
             .withChild(instantiater.buildGameObject("camera", new Vector3(0, 0, 1))
                 .withComponent(Camera, c => c.viewSize = 4)
@@ -66,18 +81,10 @@ export class Bootstrapper extends BaseBootstrapper {
                     c.onPointerMove.addListener(e => {
                         tempVector.set(e.position.x, e.position.y, 0);
                         c.transform.transformPoint(tempVector);
-                        testCursor.ref!.transform.position.copy(tempVector);
                     });
                 })
-                .getComponent(CameraController, cameraController))
-
-            .withChild(instantiater.buildGameObject("test-cursor")
-                .withComponent(CssSpriteRenderer, c => {
-                    c.imageWidth = 0.5;
-                    c.imageHeight = 0.5;
-                    c.pointerEvents = false;
-                })
-                .getGameObject(testCursor))
+                .getComponent(CameraController, cameraController)
+                .getComponent(PointerInputListener, pointerInputListener))
         ;
     }
 }

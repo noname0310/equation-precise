@@ -1,4 +1,4 @@
-import { Component } from "the-world-engine";
+import { Component, EventContainer, IEventContainer } from "the-world-engine";
 import { GraphRenderer } from "./GraphRenderer";
 import { ErrorLevel, ParserBind } from "./ParserBind";
 
@@ -7,6 +7,9 @@ export class UiController extends Component {
     private _errorMessageDiv: HTMLDivElement|null = null;
     private _debounceTimeout: number|null = null;
     private _graphRenderer: GraphRenderer|null = null;
+    private readonly _onEquationEmited = new EventContainer<(equation: (x: number) => number, derivatedFunction: (x: number) => number) => void>();
+    private _equation: ((x: number) => number)|null = null;
+    private _derivatedFunction: ((x: number) => number)|null = null;
 
     private readonly onEquationInputFieldChange = (ev: Event): void => {
         const inputField = ev.target as HTMLInputElement;
@@ -66,13 +69,17 @@ export class UiController extends Component {
                 errorMessageDiv.style.color = "black";
 
                 errorMessageDiv.appendChild(
-                    new Text(`transformed: ${transformed.ast?.toString()}`)
+                    new Text(`transformed: ${transformed.ast.toString()}`)
                 );
                 errorMessageDiv.appendChild(document.createElement("br"));
 
                 errorMessageDiv.appendChild(
-                    new Text(`folded: ${folded?.toString()}`)
+                    new Text(`folded: ${folded!.toString()}`)
                 );
+
+                const equation = this._equation = ast.emit();
+                const derivated = this._derivatedFunction = folded!.emit();
+                this._onEquationEmited.invoke(equation, derivated);
             } else {
                 errorMessageDiv.style.color = "red";
                 
@@ -83,7 +90,7 @@ export class UiController extends Component {
         }
 
         if (this._graphRenderer) {
-            this._graphRenderer.equation = folded?.emit() ?? ((): number => 0);
+            this._graphRenderer.equation = ast.emit();
         }
 
         folded?.dispose();
@@ -124,6 +131,18 @@ export class UiController extends Component {
     public set graphRenderer(value: GraphRenderer|null) {
         this._graphRenderer = value;
         this.onEquationInputFieldChangeDebounced(this._equationInputField?.value ?? "");
+    }
+
+    public get onEquationEmited(): IEventContainer<(equation: (x: number) => number, derivatedFunction: (x: number) => number) => void> {
+        return this._onEquationEmited;
+    }
+
+    public get equation(): ((x: number) => number)|null {
+        return this._equation;
+    }
+
+    public get derivatedFunction(): ((x: number) => number)|null {
+        return this._derivatedFunction;
     }
 
     public onDestroy(): void {

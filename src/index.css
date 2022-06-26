@@ -21,6 +21,15 @@ html, body {
     z-index: 100;
 }
 
+#result_message {
+    position: absolute;
+    bottom: 60px;
+    right: 10px;
+    font-size: 20px;
+    font-family: "Arial";
+    z-index: 100;
+}
+
 .game_container {
     display: flex;
     flex-direction: column;
