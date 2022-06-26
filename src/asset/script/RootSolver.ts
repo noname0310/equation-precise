@@ -4,7 +4,7 @@ import { Vector3, Vector2 } from "three/src/Three";
 import { UiController } from "./UiController";
 
 export class RootSolver extends Component {
-    private _iteration = 10;
+    private _iteration = 100;
     private _lastCursorPositionX = NaN;
     private _viewScale = 0.1;
 
