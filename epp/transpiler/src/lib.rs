@@ -486,9 +486,9 @@ pub fn differentiate_expr(ast: &Expr) -> Result<Box<Expr>, String> {
             let lhs_has_x = check_ast_has_x(lhs);
             let rhs_has_x = check_ast_has_x(rhs);
             
-            if lhs_has_x && rhs_has_x { // (a ^ b)' = 0
+            if !lhs_has_x && !rhs_has_x { // (a ^ b)' = 0
                 Ok(Box::new(Expr::Literal(0.0)))
-            } else if lhs_has_x { // (f(x) ^ a)' = a * f(x) ^ (a - 1) * f'(x)
+            } else if lhs_has_x && !rhs_has_x { // (f(x) ^ a)' = a * f(x) ^ (a - 1) * f'(x)
                 Ok(
                     Box::new(Expr::Mul(
                         Box::new(Expr::Mul(
@@ -504,7 +504,7 @@ pub fn differentiate_expr(ast: &Expr) -> Result<Box<Expr>, String> {
                         differentiate_expr(lhs)?
                     ))
                 )
-            } else if rhs_has_x { // (a ^ g(x))' = a ^ g(x) * ln(a) * g'(x)
+            } else if !lhs_has_x && rhs_has_x { // (a ^ g(x))' = a ^ g(x) * ln(a) * g'(x)
                 Ok(
                     Box::new(Expr::Mul(
                         Box::new(Expr::Pow(
