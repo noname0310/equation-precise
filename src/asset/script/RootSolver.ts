@@ -116,7 +116,7 @@ export class RootSolver extends Component {
 
                 const resultDiv = this._resultDiv;
                 if (resultDiv) {
-                    resultDiv.innerText = `root: ${xWhenYIsZero}`;
+                    resultDiv.innerText = `root: ${Number(xWhenYIsZero.toFixed(6))}`;
                 }
 
                 yield this._waitForSeconds;
