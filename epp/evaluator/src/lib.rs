@@ -177,8 +177,11 @@ pub fn fold_expr(ast: &Expr) -> Box<Expr> {
         },
         Expr::Unary(expr) => {
             let expr = fold_expr(expr);
-            if let Expr::Literal(expr) = expr.as_ref() {
-                return Box::new(Expr::Literal(-expr));
+
+            match expr.as_ref() {
+                Expr::Literal(expr) => return Box::new(Expr::Literal(-expr)),
+                Expr::Unary(expr) => return expr.clone(),
+                _ => { }
             }
             return Box::new(Expr::Unary(expr));
         },
