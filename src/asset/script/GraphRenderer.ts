@@ -6,7 +6,7 @@ import {
     CssHtmlElementRenderer,
     PrefabRef
 } from "the-world-engine";
-import Queue from "js-sdsl/dist/esm/Queue/Queue";
+import Queue from "js-sdsl/dist/esm/container/OtherContainer/Queue";
 import { GraphMath } from "./GraphMath";
 
 export class GraphRenderer extends Component {
