@@ -1,5 +1,5 @@
 import { Vector2 } from "three/src/Three";
-import { Camera, Color, Component, Css2DLineRenderer, GameObject, PrefabRef } from "the-world-engine";
+import { Camera, Color, Component, CssLineRenderer, GameObject, PrefabRef } from "the-world-engine";
 import { CameraController } from "./CameraController";
 
 export class AxisRenderer extends Component {
@@ -30,8 +30,8 @@ export class AxisRenderer extends Component {
     private _axisObject: GameObject|null = null;
     private _xAxisObject: GameObject|null = null;
     private _yAxisObject: GameObject|null = null;
-    private _xAxis: Css2DLineRenderer|null = null;
-    private _yAxis: Css2DLineRenderer|null = null;
+    private _xAxis: CssLineRenderer|null = null;
+    private _yAxis: CssLineRenderer|null = null;
 
     private readonly _tempVector2 = new Vector2();
 
@@ -64,7 +64,7 @@ export class AxisRenderer extends Component {
         this._axisObject = this.engine.scene.addChildFromBuilder(
             this.engine.instantiater.buildGameObject("axis-renderer-axis")
                 .withChild(this.engine.instantiater.buildGameObject("axis-renderer-x-axis")
-                    .withComponent(Css2DLineRenderer, c => {
+                    .withComponent(CssLineRenderer, c => {
                         this._xAxis = c;
                         c.lineWidth = this._lineWidth;
                         c.lineColor = new Color(0.5, 0.5, 0.5);
@@ -72,7 +72,7 @@ export class AxisRenderer extends Component {
                     .getGameObject(xAxisObject))
 
                 .withChild(this.engine.instantiater.buildGameObject("axis-renderer-y-axis")
-                    .withComponent(Css2DLineRenderer, c => {
+                    .withComponent(CssLineRenderer, c => {
                         this._yAxis = c;
                         c.lineWidth = this._lineWidth;
                         c.lineColor = new Color(0.5, 0.5, 0.5);

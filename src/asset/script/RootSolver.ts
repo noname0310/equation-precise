@@ -1,4 +1,4 @@
-import { Color, Component, Coroutine, CoroutineIterator, Css2DLineRenderer, PrefabRef, WaitForSeconds } from "the-world-engine";
+import { Color, Component, Coroutine, CoroutineIterator, CssLineRenderer, PrefabRef, WaitForSeconds } from "the-world-engine";
 import { PointerEvent, PointerInputListener } from "./PointerInputListener";
 import { Vector3, Vector2 } from "three/src/Three";
 import { UiController } from "./UiController";
@@ -51,7 +51,7 @@ export class RootSolver extends Component {
         this._animation = this.startCoroutine(this.solve(position.x));
     }
 
-    private readonly _spawnedObjects: Css2DLineRenderer[] = [];
+    private readonly _spawnedObjects: CssLineRenderer[] = [];
     private readonly _tempVector2 = new Vector2();
     private readonly _tempColor = new Color();
     private readonly _waitForSeconds = new WaitForSeconds(0.1);
@@ -80,17 +80,17 @@ export class RootSolver extends Component {
             // x = (gradient * x0 - y0) / gradient
             const xWhenYIsZero = (gradient * x - y) / gradient;
 
-            const gradientLine = new PrefabRef<Css2DLineRenderer>();
+            const gradientLine = new PrefabRef<CssLineRenderer>();
 
             this.engine.scene.addChildFromBuilder(
                 this.engine.instantiater.buildGameObject(`gradient-line-${i}`)
-                    .withComponent(Css2DLineRenderer, c => {
+                    .withComponent(CssLineRenderer, c => {
                         c.point1 = this._tempVector2.set(x, y);
                         c.point2 = this._tempVector2.set(xWhenYIsZero, 0);
                         c.lineColor = this._tempColor.set(1, 0.5, 0.5);
                         c.lineWidth = this._viewScale;
                     })
-                    .getComponent(Css2DLineRenderer, gradientLine)
+                    .getComponent(CssLineRenderer, gradientLine)
             );
 
             spawnedObjects.push(gradientLine.ref!);
@@ -99,17 +99,17 @@ export class RootSolver extends Component {
 
             const nextY = this.equation(xWhenYIsZero);
             if (!isNaN(nextY)) {
-                const verticalLine = new PrefabRef<Css2DLineRenderer>();
+                const verticalLine = new PrefabRef<CssLineRenderer>();
 
                 this.engine.scene.addChildFromBuilder(
                     this.engine.instantiater.buildGameObject(`vertical-line-${i}`)
-                        .withComponent(Css2DLineRenderer, c => {
+                        .withComponent(CssLineRenderer, c => {
                             c.point1 = this._tempVector2.set(xWhenYIsZero, 0);
                             c.point2 = this._tempVector2.set(xWhenYIsZero, nextY);
                             c.lineColor = this._tempColor.set(0.5, 1, 0.5);
                             c.lineWidth = this._viewScale;
                         })
-                        .getComponent(Css2DLineRenderer, verticalLine)
+                        .getComponent(CssLineRenderer, verticalLine)
                 );
 
                 spawnedObjects.push(verticalLine.ref!);
