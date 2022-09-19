@@ -2,6 +2,7 @@ import { Vector3 } from "three/src/Three";
 import { 
     Bootstrapper as BaseBootstrapper,
     Camera,
+    GameObject,
     PrefabRef,
     SceneBuilder
 } from "the-world-engine";
@@ -23,6 +24,10 @@ export class Bootstrapper extends BaseBootstrapper {
         const graphRenderer = new PrefabRef<GraphRenderer>();
         const pointerInputListener = new PrefabRef<PointerInputListener>();
         const uiController = new PrefabRef<UiController>();
+        const gridRenderer = new PrefabRef<GridRenderer>();
+        const axisRenderer = new PrefabRef<AxisRenderer>();
+        const cameraGameObject = new PrefabRef<GameObject>();
+        const rootSolver = new PrefabRef<RootSolver>();
 
         return this.sceneBuilder
             .withChild(instantiater.buildGameObject("ui-controller")
@@ -37,9 +42,8 @@ export class Bootstrapper extends BaseBootstrapper {
                 .withComponent(GraphRenderer)
                 .withComponent(CameraRelativeScaleController, c => {
                     c.cameraRelativeScale = 2;
-                    const renderer = c.gameObject.getComponent(GraphRenderer)!;
                     c.onZoom = (viewSize: number): void => {
-                        renderer.viewScale = viewSize;
+                        graphRenderer.ref!.viewScale = viewSize;
                     };
                     c.cameraController = cameraController.ref!;
                 })
@@ -53,12 +57,12 @@ export class Bootstrapper extends BaseBootstrapper {
                 })
                 .withComponent(CameraRelativeScaleController, c => {
                     c.cameraRelativeScale = 0.01;
-                    const renderer = c.gameObject.getComponent(RootSolver)!;
                     c.onZoom = (viewSize: number): void => {
-                        renderer.lineWidth = viewSize;
+                        rootSolver.ref!.lineWidth = viewSize;
                     };
                     c.cameraController = cameraController.ref!;
-                }))
+                })
+                .getComponent(RootSolver, rootSolver))
 
             .withChild(instantiater.buildGameObject("camera", new Vector3(0, 0, 1))
                 .withComponent(Camera, c => c.viewSize = 4)
@@ -68,11 +72,9 @@ export class Bootstrapper extends BaseBootstrapper {
                 .withComponent(AxisRenderer)
                 .withComponent(CameraRelativeScaleController, c => {
                     c.cameraRelativeScale = 0.003;
-                    const gridRenderer = c.gameObject.getComponent(GridRenderer)!;
-                    const axisRenderer = c.gameObject.getComponent(AxisRenderer)!;
                     c.onZoom = (viewSize: number): void => {
-                        gridRenderer.viewScale = viewSize;
-                        axisRenderer.lineWidth = viewSize * 2;
+                        gridRenderer.ref!.viewScale = viewSize;
+                        axisRenderer.ref!.lineWidth = viewSize * 2;
                     };
                     c.cameraController = cameraController.ref!;
                 })
@@ -80,11 +82,14 @@ export class Bootstrapper extends BaseBootstrapper {
                     const tempVector = new Vector3();
                     c.onPointerMove.addListener(e => {
                         tempVector.set(e.position.x, e.position.y, 0);
-                        c.transform.transformPoint(tempVector);
+                        cameraGameObject.ref!.transform.transformPoint(tempVector);
                     });
                 })
                 .getComponent(CameraController, cameraController)
-                .getComponent(PointerInputListener, pointerInputListener))
+                .getComponent(GridRenderer, gridRenderer)
+                .getComponent(AxisRenderer, axisRenderer)
+                .getComponent(PointerInputListener, pointerInputListener)
+                .getGameObject(cameraGameObject))
         ;
     }
 }

@@ -60,28 +60,32 @@ export class AxisRenderer extends Component {
 
         const xAxisObject = new PrefabRef<GameObject>();
         const yAxisObject = new PrefabRef<GameObject>();
+        const xAxisComponent = new PrefabRef<CssLineRenderer>();
+        const yAxisComponent = new PrefabRef<CssLineRenderer>();
 
         this._axisObject = this.engine.scene.addChildFromBuilder(
             this.engine.instantiater.buildGameObject("axis-renderer-axis")
                 .withChild(this.engine.instantiater.buildGameObject("axis-renderer-x-axis")
                     .withComponent(CssLineRenderer, c => {
-                        this._xAxis = c;
                         c.lineWidth = this._lineWidth;
                         c.lineColor = new Color(0.5, 0.5, 0.5);
                     })
+                    .getComponent(CssLineRenderer, xAxisComponent)
                     .getGameObject(xAxisObject))
 
                 .withChild(this.engine.instantiater.buildGameObject("axis-renderer-y-axis")
                     .withComponent(CssLineRenderer, c => {
-                        this._yAxis = c;
                         c.lineWidth = this._lineWidth;
                         c.lineColor = new Color(0.5, 0.5, 0.5);
                     })
+                    .getComponent(CssLineRenderer, yAxisComponent)
                     .getGameObject(yAxisObject))
         );
 
         this._xAxisObject = xAxisObject.ref!;
         this._yAxisObject = yAxisObject.ref!;
+        this._xAxis = xAxisComponent.ref!;
+        this._yAxis = yAxisComponent.ref!;
 
         this.onZoom();
     }
